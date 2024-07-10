@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Ruda:wght@400..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Londrina+Outline&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="Estilos/estilos.css">
+    <script src="https://kit.fontawesome.com/99760cb516.js" crossorigin="anonymous"></script>
+    <title>INTELIGENCIA ARTIFICIAL</title>
+</head>
+<body>
+
+    <header class="header">
+        <nav>
+            <input type="checkbox" id="check">
+            <label class="logo"> <p>IA</p></label>
+            <ul class="links">
+                <li><a href="index.html">HOME</a></li>
+                <li><a href="tema1.html">TEMA 1</a></li>
+                <li><a href="form.html">CONTACTO</a></li>
+                <span></span>
+            </ul>
+            <label for="check" class="checkbtn">
+                <i class="fas fa-bars"></i>
+            </label>
+        </nav>
+    </header>
+    
+    <div class="content-header">
+        <div class="col-1">
+            <h2><span class="creative" data-text="I">I</span>NTELIGENCIA<br><span class="creative">A</span>RTIFICIAL</h2>
+            <h3>¿Qué es?</h3>
+            <p>Es una rama de la informática centrada en la creación de sistemas capaces de simular las capacidades intelectuales humanas. Al combinar estas capacidades, la IA hace que los sistemas informáticos sean más autónomo, inteligente e versátil, abriendo un abanico de posibilidades para diferentes áreas.</p>
+            
+            <button type="button"  id="playvideo"><p class="text-play" onclick="playvideo()">- Ver Video -</p> <i class="fa-solid fa-play" id="play"></i> </button>
+        </div>
+
+        <div class="col-2">
+            <img src="imagenes/IA.png" class="IA">
+            <div class="color-box"></div>
+            <div class="add-btn">
+                <a href="videos/video_ia.mp4" download="videos/video_ia"><i class="fa-solid fa-circle-down" ></i></a>
+            </div>
+        </div>
+
+        <div class="popup-video">
+            <span onclick="closeVideo()">&times;</span>
+            <iframe id="video" width="560" height="315"  src="https://www.youtube.com/embed/8lMIdrlIWOQ?si=wc9nHCEp193G8tKw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            
+        </div>
+        <script src="FuncionesJS/funciones.js"></script>
+    </div>
+   
+
+    <div class="container-1">
+        <main class="table">
+            <section class="tabla_encabezado">
+                <h2>INTELIGENCIA ARTIFICIAL</h2>
+                <hr>
+            </section>
+            <section class="tabla_cuerpo">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>VENTAJAS</th>
+                            <th>DESVENTAJAS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <td>
+                            <ol>
+                                <li>Automatización de procesos.
+                                </li>
+                                <li>Reduce el error humano
+                                </li>
+                                <li>Potencia la creatividad 
+                                </li>
+                                <li>Aporta precisión 
+                                </li>
+                                <li>Reduce los tiempos empleados en análisis de datos
+                                </li>
+                                <li>Mantenimiento predictivo
+                                </li>
+                                <li>Mejora en la toma de decisiones tanto a nivel de producción como de negocio
+                                </li>
+                                <li>Aumento de la productividad y calidad en la producción</li>
+                            </ol>
+                        </td>
+                        <td>
+                            <ol>
+                                <li>Disponibilidad de datos
+                                </li>
+                                <li>Falta de profesionales calificativos 
+                                </li>
+                                <li>El coste y el tiempo de implementación de los proyectos de IA
+                                </li>
+                                <li>Tienes que ser específico en tu búsqueda</li>
+                            </ol>
+                        </td>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    
+    </div>
+
+    <div class="container-2">
+        <h2 class="cont-title">Ejemplos de inteligencias artificiales</h2>
+        <hr>
+
+        <div class="card_contrainer2">
+
+            <article class="card_article">
+                <img src="imagenes/asistentes-de-voz.jpg" alt="imagen " class="card_imagen">
+                <div class="card_data">
+                    <span class="card_description">Un asistente de voz o asistente digital (o asistente virtual) es un software que te permitirá interactuar con él mediante comandos de voz para que te ayude con diversas tareas.</span>
+                    <h2 class="card_titulo">Asistentes de voz</h2>
+                    <a href="https://www.domoticada.com/alexa-google-assistant-siri-asistentes-de-voz/" class="card_button" target="_blank">Más información </a>
+                </div>
+            </article>
+
+            <article class="card_article">
+                <img src="imagenes/smartphone.jpg" alt="imagen " class="card_imagen" >
+                <div class="card_data">
+                    <span class="card_description"> Teléfono inteligente funciona con un sistema operativo móvil (OS) una de sus funcionalidades es un PDA (asistente digital personal)</span>
+                    <h2 class="card_titulo">Los Smartphone</h2>
+                    <a href="https://www.lenovo.com/mx/es/faqs/pc-vida-faqs/que-es-un-smartphone/?orgRef=https%253A%252F%252Fwww.google.com%252F" class="card_button" target="_blank">Más información</a>
+                </div>
+               
+            </article>
+            
+            <article class="card_article">
+                <img src="imagenes/monitoreo-de-redes-sociales.png" alt="imagen " class="card_imagen">
+                <div class="card_data">
+                    <span class="card_description">IA permite rastrear cómo cambian las emociones hacia un tema o marca a lo largo del tiempo, identificando patrones y anticipando posibles cambios en la percepción pública.</span>
+                    <h2 class="card_titulo">Monitoreo de redes sociales</h2>
+                    <a href="https://sproutsocial.com/es/glossary/social-monitoring/#:~:text=El%20monitoreo%20de%20redes%20sociales%20es%20el%20proceso%20de%20recopilar,las%20preguntas%20en%20cada%20canal." class="card_button" target="_blank">Más información</a>
+                </div>
+            </article>
+            <article class="card_article">
+                <img src="imagenes/coche.jpg" alt="imagen " class="card_imagen">
+                <div class="card_data">
+                    <span class="card_description">El GPS o Global Positioning System es un dispositivo que se instala en el automóvil y es capaz de conectarse a los satélites correspondientes</span>
+                    <h2 class="card_titulo">GPS y sistemas de geolocalización en autos</h2>
+                    <a href="https://www.beetrack.com/es/blog/rastreo-satelital-de-vehiculos#:~:text=El%20GPS%20o%20Global%20Positioning,que%20se%20mueve%20el%20auto." class="card_button" target="_blank">Más información</a>
+                </div>
+            </article>
+            <article class="card_article">
+                <img src="imagenes/Dall_E_2.jpg" alt="imagen " class="card_imagen">
+                <div class="card_data">
+                    <span class="card_description">DALL-E 2 es una herramienta de generación de imágenes por medio de inteligencia artificial. A través de lenguaje natural, la IA creará una imagen única basada en la descripción que le hayamos dado.</span>
+                    <h2 class="card_titulo">Dall-E 2</h2>
+                    <a href="https://es.wired.com/articulos/como-usar-dalle-para-crear-tus-propias-imagenes-con-ia#:~:text=DALL%C2%B7E%202%20no%20solo,ser%C3%ADan%20posibles%20en%20otras%20herramientas." class="card_button" target="_blank">Más información</a>
+                </div>
+            </article>
+            <article class="card_article">
+                <img src="imagenes/GPT3.jpg" alt="imagen " class="card_imagen">
+                <div class="card_data">
+                    <span class="card_description">Es un nuevo modelo de predicción lingüística basados en redes neuronales y construidos sobre la arquitectura Transformer. </span>
+                    <h2 class="card_titulo">GPT-3</h2>
+                    <a href="https://www.iebschool.com/blog/que-es-chat-gpt3-openai-tecnologia/" class="card_button" target="_blank">Más información</a>
+                </div>
+            </article>
+
+        </div>
+        
+    </div>
+    <section class="container-video">
+        <h2>Etapas de la Inteligencia Artificial</h2>
+        <hr>
+        <div>
+            <iframe width="660" height="420" src="https://www.youtube.com/embed/MgWtYXcUg9Y?si=8usstFWOUpy0eh-p" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+    </section>
+
+    <section class="about-us">
+        <div class="main-img">
+            <box class="img-box">
+                <a href="https://www.infoamerica.org/teoria/mcculloch1.htm" target="_blank"><img src="imagenes/Warren McCulloch.jpg"></a>
+            </box>
+            <box class="img-box">
+                <a href="https://www.wikiwand.com/es/Walter_Pitts" target="_blank"><img src="imagenes/NombreCual.jpeg"></a>
+            </box>
+            
+        </div>
+        <div class="text">
+            <h4>¿Cómo nació la inteligencia artificial?</h4>
+            <hr>
+            <p>La idea de crear máquinas que imitaran la inteligencia humana estaba presente incluso en la antigüedad, con mitos y leyendas sobre autómatas y máquinas pensantes. Sin embargo, no fue hasta mitad del siglo XX cuando se investigó su verdadero potencial, después de que se desarrollaran las primeras computadoras electrónicas. <br>
+                En 1943 Warren McCulloch y Walter Pitts presentaron su modelo de neuronas artificiales, considerada la primera inteligencia artificial, aun cuando todavía no existía el término.</p>
+                <div class="last-text">
+                    <div class="text1">
+                        <h3><span class="creative">Conocer Mas</span></h3>
+                        <h5>Da click en la Imagen</h5>
+                    </div>
+                </div>
+        </div>
+    </section>
+    <footer>
+        <div class="footer-content">
+            <h3>SOBRE NOSOTROS: </h3>
+            <p>DIVISIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN
+                TSU EN TECNOLOGÍAS DE LA INFORMACIÓN ÁREA DESARROLLO
+                DE SOFTWARE MULTIPLATAFORMA
+                 </p>
+                 <br>
+                 <p> EQUIPO: <br> Guadalupe Alonso Perez<br> Jesus Baruc Gaspariano Martinez <br> Aldo Fernando Soto Soto</p>
+            <ul class="socials">
+                <li><a href="#"><i class="fa fa-facebook"></i></a></li>
+                <li><a href="#"><i class="fa fa-twitter"></i></a></li>
+                <li><a href="#"><i class="fa fa-google-plus"></i></a></li>
+                <li><a href="#"><i class="fa fa-youtube"></i></a></li>
+                <li><a href="#"><i class="fa fa-linkedin-square"></i></a></li>
+            </ul>
+        </div>
+        <div class="footer-bottom"> 
+            <p>copyright &copy; 2020 Universidad Tecnologica de Puebla. Diseñado por<span> UTP</span></p>
+        </div>
+    </footer>
+    
+</body>
+</html>
