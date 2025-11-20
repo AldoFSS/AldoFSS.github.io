@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible"
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recetario | Página 1</title>
+    <link rel="preconnect" href="https:://fonts.googleapis.com">
+    <link rel="preconnect" href="https:://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../estilos/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+</head>
+
+<body>
+    
+
+<!-- ======================================= -->
+<!--                CARRUSEL                 -->
+<!-- ======================================= -->
+<header class="simple-header">
+    <div class="logo">MiLogo</div>
+
+    <nav class="menu">
+        <a href="#">Inicio</a>
+        <a href="#">Recetas</a>
+        <a href="#">Contacto</a>
+    </nav>
+</header>
+<div id="carouselHero" class="carousel slide mb-4" data-bs-ride="carousel">
+
+    <div class="carousel-indicators">
+        <button type="button" data-bs-target="#carouselHero" data-bs-slide-to="0" class="active"></button>
+        <button type="button" data-bs-target="#carouselHero" data-bs-slide-to="1"></button>
+        <button type="button" data-bs-target="#carouselHero" data-bs-slide-to="2"></button>
+    </div>
+
+    <div class="carousel-inner">
+
+        <!-- SLIDE 1 -->
+        <div class="carousel-item active">
+            <div class="d-flex flex-column justify-content-center align-items-center text-center"
+                 style="background: linear-gradient(135deg, #111, #333); height: 350px; color: white;">
+                <h1>TOP RECETAS</h1>
+                <p>Explora las mejores sugerencias de recetas</p>
+                <a href="receta.html" class="btn btn-warning mt-3">Visitar</a>
+            </div>
+        </div>
+
+        <!-- SLIDE 2 -->
+        <div class="carousel-item">
+            <div class="d-flex flex-column justify-content-center align-items-center text-center"
+                 style="background: url('https://via.placeholder.com/1200x350') center/cover; height: 350px; color: white;">
+                <h1>Recetas Populares</h1>
+                <p>Los platillos que todos aman</p>
+                <a href="menu.html" class="btn btn-warning mt-3">Explorar</a>
+            </div>
+        </div>
+
+        <!-- SLIDE 3 -->
+        <div class="carousel-item">
+            <div class="d-flex flex-column justify-content-center align-items-center text-center"
+                 style="background: url('https://via.placeholder.com/1200x350/111') center/cover; height: 350px; color: white;">
+                <h1>Nuevas Recetas</h1>
+                <p>Descubre los últimos platillos agregados</p>
+                <a href="menu.html" class="btn btn-warning mt-3">Ver más</a>
+            </div>
+        </div>
+
+    </div>
+
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselHero" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+    </button>
+
+    <button class="carousel-control-next" type="button" data-bs-target="#carouselHero" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+    </button>
+
+</div>
+<!-- ======================================= -->
+<!--           SECCIÓN TOP RECETAS           -->
+<!-- ======================================= -->
+<section class="container mb-6"> 
+    <h2 class="text-center fw-bold" style="font-size: 28px; color: #2d4a1a;">
+        TOP RECETAS
+    </h2>
+
+    <p class="text-center" style="margin-top: -5px; color: #3d5f22;">
+        Explora las mejores sugerencias de recetas
+    </p>
+    <div class="sliders">
+        <div class="slide">
+            <div class="card-container">
+    <div class="card">
+        <div class="card_landing">
+            <img src="../imagenes/img.jpg" alt="imagen">
+            <div class="fav-icon">
+                <div class="icon-column">
+                    <i class="fa-regular fa-heart"></i>
+                    <i class="fa-regular fa-cart-shopping"></i>
+                    <i class="fa-regular fa-plus"></i>
+                </div>
+            </div>
+            <h6>Tacos al Pastor</h6>
+            <h6 class="star-rating">★★★★★</h6>
+        </div>
+        <div class="card_info">
+            <div class="head">
+                <p class="title">Tacos al Pastor</p>
+                <div class="description">
+                    <div class="item">
+                        <i class="fa-regular fa-clock"></i>
+                        <p>30 min</p>
+                    </div>
+                    <div class="item">
+                        <i class="fa-regular fa-user"></i>
+                        <p>Chef MX</p>
+                    </div>
+                </div>
+            </div>
+            <div class="content">
+                <p class="title">Ingredientes:</p>
+                <ul class="list">
+                    <li>Carne de cerdo</li>
+                    <li>Piña</li>
+                    <li>Tortillas</li>
+                    <li class="more-items">+ 4 más...</li>
+                </ul>
+            </div>
+            <div class="action">
+                <a href="#" class="btn">Ver receta</a>
+            </div>
+        </div>
+    </div>
+</div>
+        </div>
+        <div class="slide">
+            <div class="card-container">
+    <div class="card">
+        <div class="card_landing">
+            <img src="../imagenes/img.jpg" alt="imagen">
+            <div class="fav-icon">
+                <div class="icon-column">
+                    <i class="fa-regular fa-heart"></i>
+                    <i class="fa-regular fa-cart-shopping"></i>
+                    <i class="fa-regular fa-plus"></i>
+                </div>
+            </div>
+            <h6>Tacos al Pastor</h6>
+            <h6 class="star-rating">★★★★★</h6>
+        </div>
+        <div class="card_info">
+            <div class="head">
+                <p class="title">Tacos al Pastor</p>
+                <div class="description">
+                    <div class="item">
+                        <i class="fa-regular fa-clock"></i>
+                        <p>30 min</p>
+                    </div>
+                    <div class="item">
+                        <i class="fa-regular fa-user"></i>
+                        <p>Chef MX</p>
+                    </div>
+                </div>
+            </div>
+            <div class="content">
+                <p class="title">Ingredientes:</p>
+                <ul class="list">
+                    <li>Carne de cerdo</li>
+                    <li>Piña</li>
+                    <li>Tortillas</li>
+                    <li class="more-items">+ 4 más...</li>
+                </ul>
+            </div>
+            <div class="action">
+                <a href="#" class="btn">Ver receta</a>
+            </div>
+        </div>
+    </div>
+</div>
+        </div>
+        <div class="slide">
+            <div class="card-container">
+    <div class="card">
+        <div class="card_landing">
+            <img src="../imagenes/img.jpg" alt="imagen">
+            <div class="fav-icon">
+                <div class="icon-column">
+                    <i class="fa-regular fa-heart"></i>
+                    <i class="fa-regular fa-cart-shopping"></i>
+                    <i class="fa-regular fa-plus"></i>
+                </div>
+            </div>
+            <h6>Tacos al Pastor</h6>
+            <h6 class="star-rating">★★★★★</h6>
+        </div>
+        <div class="card_info">
+            <div class="head">
+                <p class="title">Tacos al Pastor</p>
+                <div class="description">
+                    <div class="item">
+                        <i class="fa-regular fa-clock"></i>
+                        <p>30 min</p>
+                    </div>
+                    <div class="item">
+                        <i class="fa-regular fa-user"></i>
+                        <p>Chef MX</p>
+                    </div>
+                </div>
+            </div>
+            <div class="content">
+                <p class="title">Ingredientes:</p>
+                <ul class="list">
+                    <li>Carne de cerdo</li>
+                    <li>Piña</li>
+                    <li>Tortillas</li>
+                    <li class="more-items">+ 4 más...</li>
+                </ul>
+            </div>
+            <div class="action">
+                <a href="#" class="btn">Ver receta</a>
+            </div>
+        </div>
+    </div>
+</div>
+        </div>
+        <div class="slide">
+            <div class="card-container">
+    <div class="card">
+        <div class="card_landing">
+            <img src="../imagenes/img.jpg" alt="imagen">
+            <div class="fav-icon">
+                <div class="icon-column">
+                    <i class="fa-regular fa-heart"></i>
+                    <i class="fa-regular fa-cart-shopping"></i>
+                    <i class="fa-regular fa-plus"></i>
+                </div>
+            </div>
+            <h6>Tacos al Pastor</h6>
+            <h6 class="star-rating">★★★★★</h6>
+        </div>
+        <div class="card_info">
+            <div class="head">
+                <p class="title">Tacos al Pastor</p>
+                <div class="description">
+                    <div class="item">
+                        <i class="fa-regular fa-clock"></i>
+                        <p>30 min</p>
+                    </div>
+                    <div class="item">
+                        <i class="fa-regular fa-user"></i>
+                        <p>Chef MX</p>
+                    </div>
+                </div>
+            </div>
+            <div class="content">
+                <p class="title">Ingredientes:</p>
+                <ul class="list">
+                    <li>Carne de cerdo</li>
+                    <li>Piña</li>
+                    <li>Tortillas</li>
+                    <li class="more-items">+ 4 más...</li>
+                </ul>
+            </div>
+            <div class="action">
+                <a href="#" class="btn">Ver receta</a>
+            </div>
+        </div>
+    </div>
+</div>
+        </div>
+        <div class="slide">
+            <div class="card-container">
+    <div class="card">
+        <div class="card_landing">
+            <img src="../imagenes/img.jpg" alt="imagen">
+            <div class="fav-icon">
+                <div class="icon-column">
+                    <i class="fa-regular fa-heart"></i>
+                    <i class="fa-regular fa-cart-shopping"></i>
+                    <i class="fa-regular fa-plus"></i>
+                </div>
+            </div>
+            <h6>Tacos al Pastor</h6>
+            <h6 class="star-rating">★★★★★</h6>
+        </div>
+        <div class="card_info">
+            <div class="head">
+                <p class="title">Tacos al Pastor</p>
+                <div class="description">
+                    <div class="item">
+                        <i class="fa-regular fa-clock"></i>
+                        <p>30 min</p>
+                    </div>
+                    <div class="item">
+                        <i class="fa-regular fa-user"></i>
+                        <p>Chef MX</p>
+                    </div>
+                </div>
+            </div>
+            <div class="content">
+                <p class="title">Ingredientes:</p>
+                <ul class="list">
+                    <li>Carne de cerdo</li>
+                    <li>Piña</li>
+                    <li>Tortillas</li>
+                    <li class="more-items">+ 4 más...</li>
+                </ul>
+            </div>
+            <div class="action">
+                <a href="#" class="btn">Ver receta</a>
+            </div>
+        </div>
+    </div>
+</div>
+        </div>
+        <div class="slide">
+            <div class="card-container">
+    <div class="card">
+        <div class="card_landing">
+            <img src="../imagenes/img.jpg" alt="imagen">
+            <div class="fav-icon">
+                <div class="icon-column">
+                    <i class="fa-regular fa-heart"></i>
+                    <i class="fa-regular fa-cart-shopping"></i>
+                    <i class="fa-regular fa-plus"></i>
+                </div>
+            </div>
+            <h6>Tacos al Pastor</h6>
+            <h6 class="star-rating">★★★★★</h6>
+        </div>
+        <div class="card_info">
+            <div class="head">
+                <p class="title">Tacos al Pastor</p>
+                <div class="description">
+                    <div class="item">
+                        <i class="fa-regular fa-clock"></i>
+                        <p>30 min</p>
+                    </div>
+                    <div class="item">
+                        <i class="fa-regular fa-user"></i>
+                        <p>Chef MX</p>
+                    </div>
+                </div>
+            </div>
+            <div class="content">
+                <p class="title">Ingredientes:</p>
+                <ul class="list">
+                    <li>Carne de cerdo</li>
+                    <li>Piña</li>
+                    <li>Tortillas</li>
+                    <li class="more-items">+ 4 más...</li>
+                </ul>
+            </div>
+            <div class="action">
+                <a href="#" class="btn">Ver receta</a>
+            </div>
+        </div>
+    </div>
+</div>
+        </div>
+        
+    </div>
+</section>
+
+
+
+
+<!-- ======================================= -->
+<!--       SIDEBAR + GRID ACOMODADOS         -->
+<!-- ======================================= -->
+
+<div class="page-wrapper">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+        <div class="filter-group">
+            <div class="filter-title">Categorías <span>▼</span></div>
+            <div class="filter-content">
+                <ul>
+                    <li>Postres</li>
+                    <li>Pollo y carne</li>
+                    <li>Sopas</li>
+                    <li>Diabetes</li>
+                    <li>Pescados y Mariscos</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <div class="filter-title">Preferencias <span>▼</span></div>
+            <div class="filter-content">
+                <ul>
+                    <li>Recetas fáciles</li>
+                    <li>Dietas</li>
+                    <li>Saludables</li>
+                    <li>Botanas fáciles</li>
+                    <li>Niños</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <div class="filter-title">Tiempo <span>▼</span></div>
+            <div class="filter-content">
+                <input type="range" min="0" max="60">
+                <p>30 min</p>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <div class="filter-title">Ingredientes <span>▼</span></div>
+            <div class="filter-content">
+                <ul>
+                    <li>Chocolate</li>
+                    <li>Chile</li>
+                    <li>Arroz</li>
+                    <li>Pasta</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+    
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <h2 class="text-center fw-bold" style="font-size: 28px; color: #2d4a1a;">
+        RECETAS
+    </h2>
+
+    <p class="text-center" style="margin-top: -5px; color: #3d5f22;">
+        Explora las mejores recetas
+    </p>
+        <div class="content-bar">
+            <input class="search-bar" placeholder="Buscar...">
+            <div class="top-buttons">
+                <button>Recomendado</button>
+                <button>Lo más nuevo</button>
+                <button>Lo más popular</button>
+            </div>
+        </div>
+        <!-- GRID -->
+        <div class="recipes-grid">
+                <!-- ================= TACOS AL PASTOR ================= -->
+<div class="card-container">
+    <div class="card">
+        <div class="card_landing">
+            <img src="../imagenes/img.jpg" alt="imagen">
+            <div class="fav-icon">
+                <div class="icon-column">
+                    <i class="fa-regular fa-heart"></i>
+                    <i class="fa-regular fa-cart-shopping"></i>
+                    <i class="fa-regular fa-plus"></i>
+                </div>
+            </div>
+            <h6>Tacos al Pastor</h6>
+            <h6 class="star-rating">★★★★★</h6>
+        </div>
+        <div class="card_info">
+            <div class="head">
+                <p class="title">Tacos al Pastor</p>
+                <div class="description">
+                    <div class="item">
+                        <i class="fa-regular fa-clock"></i>
+                        <p>30 min</p>
+                    </div>
+                    <div class="item">
+                        <i class="fa-regular fa-user"></i>
+                        <p>Chef MX</p>
+                    </div>
+                </div>
+            </div>
+            <div class="content">
+                <p class="title">Ingredientes:</p>
+                <ul class="list">
+                    <li>Carne de cerdo</li>
+                    <li>Piña</li>
+                    <li>Tortillas</li>
+                    <li class="more-items">+ 4 más...</li>
+                </ul>
+            </div>
+            <div class="action">
+                <a href="../paginas/receta.html" class="btn">Ver receta</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= BURGER PREMIUM ================= -->
+<div class="card-container">
+    <div class="card">
+        <div class="card_landing">
+            <img src="../imagenes/img.jpg" alt="imagen">
+            <div class="fav-icon">
+                <div class="icon-column">
+                    <i class="fa-regular fa-heart"></i>
+                    <i class="fa-regular fa-cart-shopping"></i>
+                    <i class="fa-regular fa-plus"></i>
+                </div>
+            </div>
+            <h6>Hamburguesa Premium</h6>
+            <h6 class="star-rating">★★★★☆</h6>
+        </div>
+        <div class="card_info">
+            <div class="head">
+                <p class="title">Hamburguesa</p>
+                <div class="description">
+                    <div class="item">
+                        <i class="fa-regular fa-clock"></i>
+                        <p>15 min</p>
+                    </div>
+                    <div class="item">
+                        <i class="fa-regular fa-user"></i>
+                        <p>Roberto</p>
+                    </div>
+                </div>
+            </div>
+            <div class="content">
+                <p class="title">Ingredientes:</p>
+                <ul class="list">
+                    <li>Carne molida</li>
+                    <li>Queso cheddar</li>
+                    <li>Pan brioche</li>
+                    <li class="more-items">+ 3 más...</li>
+                </ul>
+            </div>
+            <div class="action">
+                <a href="#" class="btn">Ver receta</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= PIZZA CASERA ================= -->
+<div class="card-container">
+    <div class="card">
+        <div class="card_landing">
+            <img src="../imagenes/img.jpg" alt="imagen">
+            <div class="fav-icon">
+                <div class="icon-column">
+                    <i class="fa-regular fa-heart"></i>
+                    <i class="fa-regular fa-cart-shopping"></i>
+                    <i class="fa-regular fa-plus"></i>
+                </div>
+            </div>
+            <h6>Pizza Casera</h6>
+            <h6 class="star-rating">★★★★★</h6>
+        </div>
+        <div class="card_info">
+            <div class="head">
+                <p class="title">Pizza Casera</p>
+                <div class="description">
+                    <div class="item">
+                        <i class="fa-regular fa-clock"></i>
+                        <p>50 min</p>
+                    </div>
+                    <div class="item">
+                        <i class="fa-regular fa-user"></i>
+                        <p>Marta</p>
+                    </div>
+                </div>
+            </div>
+            <div class="content">
+                <p class="title">Ingredientes:</p>
+                <ul class="list">
+                    <li>Masa</li>
+                    <li>Salsa de tomate</li>
+                    <li>Queso mozzarella</li>
+                    <li class="more-items">+ 6 más...</li>
+                </ul>
+            </div>
+            <div class="action">
+                <a href="#" class="btn">Ver receta</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= PANQUEQUES ================= -->
+<div class="card-container">
+    <div class="card">
+        <div class="card_landing">
+            <img src="../imagenes/img.jpg" alt="imagen">
+            <div class="fav-icon">
+                <div class="icon-column">
+                    <i class="fa-regular fa-heart"></i>
+                    <i class="fa-regular fa-cart-shopping"></i>
+                    <i class="fa-regular fa-plus"></i>
+                </div>
+            </div>
+            <h6>Panqueques</h6>
+            <h6 class="star-rating">★★★★☆</h6>
+        </div>
+        <div class="card_info">
+            <div class="head">
+                <p class="title">Panqueques</p>
+                <div class="description">
+                    <div class="item">
+                        <i class="fa-regular fa-clock"></i>
+                        <p>12 min</p>
+                    </div>
+                    <div class="item">
+                        <i class="fa-regular fa-user"></i>
+                        <p>Ana</p>
+                    </div>
+                </div>
+            </div>
+            <div class="content">
+                <p class="title">Ingredientes:</p>
+                <ul class="list">
+                    <li>Harina</li>
+                    <li>Leche</li>
+                    <li>Huevos</li>
+                    <li class="more-items">+ 4 más...</li>
+                </ul>
+            </div>
+            <div class="action">
+                <a href="#" class="btn">Ver receta</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= GUACAMOLE ================= -->
+<div class="card-container">
+    <div class="card">
+        <div class="card_landing">
+            <img src="../imagenes/img.jpg" alt="imagen">
+            <div class="fav-icon">
+                <div class="icon-column">
+                    <i class="fa-regular fa-heart"></i>
+                    <i class="fa-regular fa-cart-shopping"></i>
+                    <i class="fa-regular fa-plus"></i>
+                </div>
+            </div>
+            <h6>Guacamole</h6>
+            <h6 class="star-rating">★★★★★</h6>
+        </div>
+        <div class="card_info">
+            <div class="head">
+                <p class="title">Guacamole</p>
+                <div class="description">
+                    <div class="item">
+                        <i class="fa-regular fa-clock"></i>
+                        <p>8 min</p>
+                    </div>
+                    <div class="item">
+                        <i class="fa-regular fa-user"></i>
+                        <p>Chef MX</p>
+                    </div>
+                </div>
+            </div>
+            <div class="content">
+                <p class="title">Ingredientes:</p>
+                <ul class="list">
+                    <li>Aguacate</li>
+                    <li>Cebolla</li>
+                    <li>Limón</li>
+                    <li class="more-items">+ 3 más...</li>
+                </ul>
+            </div>
+            <div class="action">
+                <a href="#" class="btn">Ver receta</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+        </div>
+
+    </div>
+
+</div>
+            
+    
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.querySelectorAll(".filter-title").forEach(title => {
+        title.addEventListener("click", () => {
+            title.parentElement.classList.toggle("open");
+        });
+    });
+</script>
+
+</body>
+</html>
