@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/seguridad.php'; exigirAdministrador(); ?>
 <style>
         .table td, .table th {
             text-align: center; /* Centra el texto en las celdas */
@@ -31,15 +32,15 @@
 
             while($fila = mysqli_fetch_array($resultado)){
             echo "<tr>";
-            echo "<th scope='row'>{$fila['ID_Cat']}</th>";
-            echo "<td>{$fila['Categoria']}</td>";
+            echo "<th scope='row'>" . htmlspecialchars((string) $fila['ID_Cat'], ENT_QUOTES, 'UTF-8') . "</th>";
+            echo "<td>" . htmlspecialchars((string) $fila['Categoria'], ENT_QUOTES, 'UTF-8') . "</td>";
             echo "<td>
                     <div class='btn-group'>
                         <a href='#' aria-label='Editar Categoria' class='btn boton_m' data-bs-toggle='modal' data-bs-target='#EditarCategoriaModal' 
-                            data-id='{$fila['ID_Cat']}' data-categoria='{$fila['Categoria']}'>
+                            data-id='" . htmlspecialchars((string) $fila['ID_Cat'], ENT_QUOTES, 'UTF-8') . "' data-categoria='" . htmlspecialchars((string) $fila['Categoria'], ENT_QUOTES, 'UTF-8') . "'>
                             <i class='bi bi-pencil-square'></i>
                         </a>
-                        <a href='#' aria-label='Eliminar producto' class='btn boton_m' data-bs-toggle='modal' data-bs-target='#DeleteModalCategoria' data-id='{$fila['ID_Cat']}'>
+                        <a href='#' aria-label='Eliminar producto' class='btn boton_m' data-bs-toggle='modal' data-bs-target='#DeleteModalCategoria' data-id='" . htmlspecialchars((string) $fila['ID_Cat'], ENT_QUOTES, 'UTF-8') . "'>
                             <i class='bi bi-trash'></i>
                         </a>
                     </div>

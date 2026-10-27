@@ -1,8 +1,12 @@
+<?php require_once __DIR__ . '/PHP/seguridad.php'; iniciarSesionSegura(); ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" >
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FF4500">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="IMG/pwa-icon.svg">
     <!-- Lightbox CSS -->
     <link rel="stylesheet"href="node_modules/lightbox2/dist/css/lightbox.min.css";>
   <!----------------------------------------------------------------------------------------------->

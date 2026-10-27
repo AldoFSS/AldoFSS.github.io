@@ -1,251 +1,116 @@
 <?php
-include('../BD/conexion.php'); 
-function InsertarProducto($connection)
-{    
-    if ($_SERVER['REQUEST_METHOD'] == "POST") {
-    // Recoger datos del formulario y evitar inyecciones SQL
-    $nombre = $_POST['Product_nombre'];
-    $descripcion = $_POST['Descripcion'];
-    $costo = $_POST['Costo'];
-    $categoria = $_POST['Categoria']; // ID de la categoría
-    if(isset($_FILES['ImgProduct'])&& $_FILES['ImgProduct']['error']== UPLOAD_ERR_OK)
-    {
-        $ImgNombre = $_FILES['ImgProduct']['name'];
-        $ImgRuta = $_FILES['ImgProduct']['tmp_name'];
-        $ImgExt = strtolower(pathinfo($ImgNombre,PATHINFO_EXTENSION));
-        $extensionesPermitidas = ['jpg', 'jpeg', 'png'];
-        if (in_array($ImgExt, $extensionesPermitidas))
-        {
-            $ImgDestino = '../PRODUCTOS/'.$nombre.'.'.$ImgExt;
-            if(move_uploaded_file($ImgRuta,$ImgDestino))
-            {
-                $ImgRuta = '../PRODUCTOS/'.$nombre.'.'.$ImgExt;
-            }
-        }
-    }
-    // Preparar la declaración SQL
-    $query = "INSERT INTO menuproductos (Product_nombre, Descripcion, Costo,Imagen, id_categoria) VALUES ('$nombre', '$descripcion', '$costo','$ImgRuta', '$categoria')";
-    $resultado= $connection->prepare($query);
-    // Ejecutar la declaración
-    if ($resultado->execute()) {
-        header('location: ../listProductos.php');  
-        exit();
-    } else {
-        echo "Error al Insertar: " . $resultado->error;
-    }
-    // Cerrar la declaración
-    $resultado->close();
-    } else {
-        echo "Error en la preparación de la consulta: " . $connection->error;      
-    }
-    // Cerrar la conexión
-    $connection->close();
-    
-}
-function EliminarProducto($connection)
+require_once __DIR__ . '/seguridad.php';
+exigirPostLocal();
+exigirAdministrador();
+require __DIR__ . '/../BD/conexion.php';
+
+function imagenProducto($actual = '')
 {
-    if ($_SERVER['REQUEST_METHOD'] == "POST") {
-        // Recoger datos del formulario y evitar inyecciones SQL
-        $id = $_POST['id'];
-
-        // Verificar que el id no esté vacío
-        if (!empty($id)) {
-            // Preparar la declaración SQL
-            $query1="DELETE FROM detallesorden WHERE ID_Productos = ?";
-            $resultado1 = $connection->prepare($query1);
-            $resultado1->bind_param('i', $id);
-
-            $query = "DELETE FROM menuproductos WHERE id = ?";
-            $resultado = $connection->prepare($query);
-            $resultado->bind_param('i', $id);
-
-            // Ejecutar la declaración
-            if ($resultado1->execute()) {
-                if($resultado->execute()){
-                    header('Location: ../listProductos.php'); // Redirigir después de eliminar
-                    exit();
-                }
-            } else {
-                echo "Error al Eliminar: " . $resultado->error;
-            }
-
-            // Cerrar la declaración
-            $resultado->close();
-        } else {
-            echo "ID del producto no proporcionado.";
-        }
-    } else {
-        echo "Método de solicitud no válido.";
+    $archivo = $_FILES['ImgProduct'] ?? null;
+    if (!$archivo || $archivo['error'] === UPLOAD_ERR_NO_FILE) {
+        return $actual;
     }
-
-    // Cerrar la conexión
-    $connection->close();
+    if ($archivo['error'] !== UPLOAD_ERR_OK || $archivo['size'] > 5 * 1024 * 1024 ||
+        !is_uploaded_file($archivo['tmp_name'])) {
+        throw new InvalidArgumentException('La imagen debe pesar como máximo 5 MB.');
+    }
+    $tipos = ['image/jpeg' => 'jpg', 'image/png' => 'png'];
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($archivo['tmp_name']);
+    if (!isset($tipos[$mime]) || !getimagesize($archivo['tmp_name'])) {
+        throw new InvalidArgumentException('Selecciona una imagen JPG o PNG válida.');
+    }
+    $nombre = bin2hex(random_bytes(16)) . '.' . $tipos[$mime];
+    $directorio = __DIR__ . '/../PRODUCTOS/';
+    if (!is_dir($directorio) && !mkdir($directorio, 0755, true)) {
+        throw new RuntimeException('No se pudo crear el directorio de imágenes.');
+    }
+    if (!move_uploaded_file($archivo['tmp_name'], $directorio . $nombre)) {
+        throw new RuntimeException('No se pudo guardar la imagen.');
+    }
+    return '../PRODUCTOS/' . $nombre;
 }
-
-function ActualizarProducto($connection)
-{
-    if ($_SERVER['REQUEST_METHOD'] == "POST") {
-        // Recoger datos del formulario y evitar inyecciones SQL
-        $id = $_POST['id']; // ID del producto para actualizar
-        $nombre = $_POST['Product_nombre'];//Nombre del Producto
-        $descripcion = $_POST['Descripcion'];//Descripcion del Producto
-        $costo = $_POST['Costo'];//Coste del Producto
-        $categoria = $_POST['Categoria']; // ID de la categoría
-
-        // Verificar si se ha subido una nueva imagen
-        if (isset($_FILES['ImgProduct']) && $_FILES['ImgProduct']['error'] == UPLOAD_ERR_OK) {
-            $ImgNombre = $_FILES['ImgProduct']['name'];
-            $ImgRuta = $_FILES['ImgProduct']['tmp_name'];
-            $ImgExt = strtolower(pathinfo($ImgNombre, PATHINFO_EXTENSION));
-            $extensionesPermitidas = ['jpg', 'jpeg', 'png'];
-            if (in_array($ImgExt, $extensionesPermitidas)) {
-                $ImgDestino = '../PRODUCTOS/' . $nombre . '.' . $ImgExt;
-                if (move_uploaded_file($ImgRuta, $ImgDestino)) {
-                    $ImgRuta = '../PRODUCTOS/' . $nombre . '.' . $ImgExt;
-                }
-            }
-        } else {
-            // Si no se ha subido una nueva imagen, usar la imagen existente (si existe)
-            $ImgRuta = $_POST['ImagenActual'];
-        }
-
-        // Preparar la declaración SQL para actualizar el producto
-        $query = "UPDATE menuproductos 
-                  SET Product_nombre = ?, Descripcion = ?, Costo = ?, Imagen = ?, id_categoria = ? 
-                  WHERE id = ?";
-        $resultado = $connection->prepare($query);
-
-        // Ejecutar la declaración
-        if ($resultado->execute([$nombre, $descripcion, $costo, $ImgRuta, $categoria, $id])) {
-             // Cerrar la conexión
-            $connection->close();
-            header('Location: ../listProductos.php');
-        } else {
-            echo "Error al Actualizar: " . $resultado->error;
-        }
-
-        // Cerrar la declaración
-        $resultado->close();
-    } else {
-        echo "Error en la preparación de la consulta: " . $connection->error;
-    }
-   
-}
-function InsertarCategoria($connection)
-{
-    if ($_SERVER['REQUEST_METHOD'] == "POST") {
-    // Recoger datos del formulario y evitar inyecciones SQL
-    $Categoria = $_POST['Categoria'];
-
-    // Preparar la declaración SQL
-    $query = "INSERT INTO menucategoria (Categoria) VALUES ('$Categoria')";
-    $resultado= $connection->prepare($query);
-    // Ejecutar la declaración
-    if ($resultado->execute()) {
-        // Cerrar la conexión
-        $connection->close();
-        header('location: ../listCategorias.php');
-    } else {
-        echo "Error al Insertar: " . $resultado->error;
-    }
-    // Cerrar la declaración
-    $resultado->close();
-    } else {
-        echo "Error en la preparación de la consulta: " . $connection->error;
-    }
-
-}
-function EditarCategoria($connection){
-    if ($_SERVER['REQUEST_METHOD'] == "POST") {
-        // Recoger datos del formulario y evitar inyecciones SQL
-        $id = $_POST['id']; // ID del producto para actualizar
-        $categoria = $_POST['Categoria']; // ID de la categoría
-        // Preparar la declaración SQL para actualizar el producto
-        $query = "UPDATE menucategoria 
-                  SET Categoria = ?
-                  WHERE ID_Cat = ?";
-        $resultado = $connection->prepare($query);
-
-        // Ejecutar la declaración
-        if ($resultado->execute([$categoria, $id])) {
-             // Cerrar la conexión
-            $connection->close();
-            header('Location: ../listCategorias.php');
-        } else {
-            echo "Error al Actualizar: " . $resultado->error;
-        }
-
-        // Cerrar la declaración
-        $resultado->close();
-    } else {
-        echo "Error en la preparación de la consulta: " . $connection->error;
-    }
-}
-function Eliminarcategoria($connection)
-{
-    if ($_SERVER['REQUEST_METHOD'] == "POST") {
-        // Recoger datos del formulario y evitar inyecciones SQL
-        $id = $_POST['id'];
-
-        // Verificar que el id no esté vacío
-        if (!empty($id)) {
-            // Preparar la declaración SQL
-            $query1 = "DELETE FROM menuproductos WHERE id_categoria = ?";
-            $resultado1 = $connection->prepare($query1);
-            $resultado1->bind_param('i', $id);
-
-            $query = "DELETE FROM menucategoria WHERE ID_Cat = ?";
-            $resultado = $connection->prepare($query);
-            $resultado->bind_param('i', $id);
-
-
-            // Ejecutar la declaración
-            if ($resultado1->execute()) {
-                if($resultado-> execute()){
-                    header('Location: ../listCategorias.php'); // Redirigir después de eliminar
-                    exit();
-                }
-            } else {
-                echo "Error al Eliminar: " . $resultado->error;
-            }
-
-            // Cerrar la declaración
-            $resultado->close();
-        } else {
-            echo "ID del producto no proporcionado.";
-        }
-    } else {
-        echo "Método de solicitud no válido.";
-    }
-
-    // Cerrar la conexión
-    $connection->close();
-}
-// Determinar qué función llamar según el parámetro de acción
-if (isset($_POST['accion'])) {
-    switch ($_POST['accion']) {
+$enTransaccion = false;
+$imagenNueva = null;
+try {
+    $accion = $_POST['accion'] ?? '';
+    $destino = in_array($accion, ['categoria', 'actualizarCat', 'eliminarCat'], true)
+        ? '../listCategorias.php' : '../listProductos.php';
+    $connection->begin_transaction();
+    $enTransaccion = true;
+    switch ($accion) {
         case 'insertar':
-            InsertarProducto($connection);
-            break;
         case 'actualizar':
-            ActualizarProducto($connection);
+            $nombre = textoFormulario('Product_nombre', 255);
+            $descripcion = $_POST['Descripcion'] ?? '';
+            if (!is_string($descripcion) || strlen($descripcion) > 60000) {
+                throw new InvalidArgumentException('Descripción no válida.');
+            }
+            $costo = $_POST['Costo'] ?? '';
+            if (!is_string($costo) || !preg_match('/^\\d{1,8}(?:\\.\\d{1,2})?$/D', $costo)) {
+                throw new InvalidArgumentException('El costo debe ser positivo y tener hasta dos decimales.');
+            }
+            $categoria = enteroPositivo($_POST['Categoria'] ?? null);
+            $imagen = '';
+            if ($accion === 'actualizar') {
+                $id = enteroPositivo($_POST['id'] ?? null);
+                $q = $connection->prepare('SELECT Imagen FROM menuproductos WHERE id = ? FOR UPDATE');
+                $q->bind_param('i', $id);
+                $q->execute();
+                $producto = $q->get_result()->fetch_assoc();
+                if (!$producto) {
+                    throw new InvalidArgumentException('El producto ya no existe.');
+                }
+                $imagen = $producto['Imagen'];
+            }
+            $anterior = $imagen;
+            $imagen = imagenProducto($imagen);
+            if ($imagen !== $anterior) {
+                $imagenNueva = __DIR__ . '/../PRODUCTOS/' . basename($imagen);
+            }
+            if ($accion === 'insertar') {
+                $q = $connection->prepare('INSERT INTO menuproductos (Product_Nombre, Descripcion, Costo, Imagen, id_categoria) VALUES (?, ?, ?, ?, ?)');
+                $q->bind_param('ssssi', $nombre, $descripcion, $costo, $imagen, $categoria);
+            } else {
+                $q = $connection->prepare('UPDATE menuproductos SET Product_Nombre=?, Descripcion=?, Costo=?, Imagen=?, id_categoria=? WHERE id=?');
+                $q->bind_param('ssssii', $nombre, $descripcion, $costo, $imagen, $categoria, $id);
+            }
             break;
         case 'eliminar':
-            EliminarProducto($connection);
+            $id = enteroPositivo($_POST['id'] ?? null);
+            // La FK impide eliminar productos vendidos; nunca borrar detalles de ventas.
+            $q = $connection->prepare('DELETE FROM menuproductos WHERE id=?');
+            $q->bind_param('i', $id);
             break;
         case 'categoria':
-            InsertarCategoria($connection);
+            $categoria = textoFormulario('Categoria', 50);
+            $q = $connection->prepare('INSERT INTO menucategoria (Categoria) VALUES (?)');
+            $q->bind_param('s', $categoria);
             break;
         case 'actualizarCat':
-            EditarCategoria($connection);
+            $categoria = textoFormulario('Categoria', 50);
+            $id = enteroPositivo($_POST['id'] ?? null);
+            $q = $connection->prepare('UPDATE menucategoria SET Categoria=? WHERE ID_Cat=?');
+            $q->bind_param('si', $categoria, $id);
             break;
         case 'eliminarCat':
-            Eliminarcategoria($connection);
+            $id = enteroPositivo($_POST['id'] ?? null);
+            $q = $connection->prepare('DELETE FROM menucategoria WHERE ID_Cat=?');
+            $q->bind_param('i', $id);
             break;
         default:
-            echo "Acción no válida.";
+            throw new InvalidArgumentException('Acción no válida.');
     }
-} else {
-    echo "Acción no especificada.";
+    $q->execute();
+    $connection->commit();
+    $enTransaccion = false;
+    header('Location: ' . $destino, true, 303);
+    exit;
+} catch (Throwable $e) {
+    if ($enTransaccion) $connection->rollback();
+    if ($imagenNueva && is_file($imagenNueva)) unlink($imagenNueva);
+    error_log((string) $e);
+    http_response_code($e instanceof InvalidArgumentException ? 422 : 409);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo $e instanceof InvalidArgumentException ? $e->getMessage()
+        : 'No se pudo completar la operación. No se pueden eliminar productos vendidos ni categorías con productos. Regresa a la pantalla anterior.';
 }
-?>

@@ -1,7 +1,7 @@
 .buscar{
     margin-left: 5px;
     background-color: #ffffff;
-    color: #000000;
+    color: #232a34;
     border-radius: 12px;
     padding: 10px;
     font-size: 14px;
@@ -14,16 +14,16 @@
     color: white;
 }
 .dropdown-item:hover{
-    color: #d65106;
+    color: #FF4500;
     background-color: white;
 }
 .dropdown-item{
-    color: black;
+    color: #232a34;
     background-color: white;
 }
 .btn.boton_m{
     background-color: #ffffff;
-    color: #000000;
+    color: #232a34;
     border-radius: 12px;
     padding: 10px;
     font-size: 14px;
@@ -116,11 +116,11 @@
 }
 .navbar-expand-lg .navbar-collapse li a:hover
 {
-	color: #d65106;
+	color: #FF4500;
 }
 
 .navbar-expand-lg .navbar-collapse .active a{
-    color: #d65106;
+    color: #FF4500;
 }
 
 .navbar-brand
@@ -130,7 +130,7 @@
 /*--------------------------------------------------------------------*/
 .custom_list li a:hover
 {
-	color: #0e8ce4;
+	color: #FF4500;
 }
 .cart{
     letter-spacing: 3px;
@@ -159,7 +159,7 @@
 	display: block;
 	line-height: 20px;
 	font-size: 12px;
-	color: #000000;
+	color: #232a34;
     border: 2px solid #FF4500;
     border-radius: 50%;
     width: 24px;
@@ -202,7 +202,7 @@
 {
 	font-size: 18px;
 	font-weight: 400;
-	color: #000000;
+	color: #232a34;
 	-webkit-transition: all 200ms ease;
 	-moz-transition: all 200ms ease;
 	-ms-transition: all 200ms ease;
@@ -211,13 +211,13 @@
 }
 .cart_text a:hover
 {
-	color: #0e8ce4;
+	color: #FF4500;
 }
 .cart_price
 {
     margin-left: 4px;
 	font-size: 1rem;
-	color: #000000;
+	color: #232a34;
 }
 
 /* Pantallas menores a 768px */
@@ -265,7 +265,7 @@
 }
 /*--TITULO-----------------------*/
 .titulo{
-    color: #000000;
+    color: #232a34;
     margin-bottom: 20px;
     text-align: center;
 }
@@ -280,7 +280,7 @@
     transition: all .5s ease;
 }
 .cajas:hover, .cajas:focus{
-    border-left: 10px solid #FFA500;
+    border-left: 10px solid #FF4500;
 }
 .termino2{
     color:#1f1f1f;
@@ -299,7 +299,7 @@
     margin-left: 10px;
     font-size: 15px;
     background: #ffffff;
-    color: black;
+    color: #232a34;
     cursor: pointer;
     border: 2px solid #FF4500;
     transition: all .5s ease;
@@ -316,7 +316,7 @@
     margin: 20px 0;
     font-size: 15px;
     background: #ffffff;
-    color: black;
+    color: #232a34;
     cursor: pointer;
     transition: all .5s ease;
     border: 2px solid #FF4500;
@@ -326,11 +326,11 @@
     color: white;
 }
 .btn:hover{
-    background: #FFA500;
+    background: #d83b00;
 }
 .nota{
     text-align: center;
-    color: #000000;
+    color: #232a34;
     font-size: 15px;
     border-left: 2px solid #FF4500;
     border-right: 2px solid #FF4500;
@@ -339,7 +339,7 @@
 /*--YA-TENGO-CUENTA--------------*/
 .tengo-cuenta{
     text-align: center;
-    color: #000000;
+    color: #232a34;
     font-weight: bold;
     text-decoration: none;
 }
@@ -420,7 +420,7 @@
     text-align: center;
     border-radius: 8px;
     background-color: #ffffff;
-    color: #000000;
+    color: #232a34;
     border: 0px;
     transition-duration: 0.4s;
     position: absolute;
@@ -430,7 +430,7 @@
 .agregar-carrito:hover{
     cursor: pointer;
     color: white;
-    background-color: #d65106;
+    background-color: #FF4500;
 }
 .gallery-single:hover .why-text{
 	bottom: 0px;
@@ -517,7 +517,7 @@ button:hover
     height: 20px;
     background-color: var(--accent-color);
     border-radius: 50%;
-    color: #000000;
+    color: #232a34;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -669,7 +669,7 @@ button:hover
 {
     border: none;
     background-color: #ffffff;
-    color: #000000;
+    color: #232a34;
     border-radius: 15px;
     padding: 10px;
     font-size: 14px;

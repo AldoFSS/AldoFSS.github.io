@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/seguridad.php'; exigirAdministrador(); ?>
 <style>
         .table td, .table th {
             text-align: center; /* Centra el texto en las celdas */
@@ -31,15 +32,15 @@
                 $resultado = mysqli_query($connection,$consulta);
                 while($fila = mysqli_fetch_array($resultado)){
                 echo "<tr>";
-                echo "<th scope='row'>{$fila['id']}</th>";
-                echo "<td>{$fila['nombre_usuario']}</td>";
-                echo "<td>{$fila['Cargo']}</td>";
+                echo "<th scope='row'>" . htmlspecialchars((string) $fila['id'], ENT_QUOTES, 'UTF-8') . "</th>";
+                echo "<td>" . htmlspecialchars((string) $fila['nombre_usuario'], ENT_QUOTES, 'UTF-8') . "</td>";
+                echo "<td>" . htmlspecialchars((string) $fila['Cargo'], ENT_QUOTES, 'UTF-8') . "</td>";
                 echo "<td>
                         <div class='btn-group'>
-                            <a href='#' class='btn boton_m' data-bs-toggle='modal' data-bs-target='#EditarUsuarioModal' data-id='{$fila['id']}' data-nombre='{$fila['nombre_usuario']}' data-cargo='{$fila['Cargo']}'>
+                            <a href='#' class='btn boton_m' data-bs-toggle='modal' data-bs-target='#EditarUsuarioModal' data-id='" . htmlspecialchars((string) $fila['id'], ENT_QUOTES, 'UTF-8') . "' data-nombre='" . htmlspecialchars((string) $fila['nombre_usuario'], ENT_QUOTES, 'UTF-8') . "' data-cargo='" . htmlspecialchars((string) $fila['Cargo'], ENT_QUOTES, 'UTF-8') . "'>
                                 <i class='bi bi-pencil-square'></i>
                             </a>
-                            <a href='#' class='btn boton_m' data-bs-toggle='modal' data-bs-target='#DeleteModalUser' data-id='{$fila['id']}'>
+                            <a href='#' class='btn boton_m' data-bs-toggle='modal' data-bs-target='#DeleteModalUser' data-id='" . htmlspecialchars((string) $fila['id'], ENT_QUOTES, 'UTF-8') . "'>
                                 <i class='bi bi-trash'></i>
                             </a>
                         </div>

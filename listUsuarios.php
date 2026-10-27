@@ -1,22 +1,28 @@
+<?php
+require_once __DIR__ . '/PHP/seguridad.php';
+exigirAdministrador();
+header('Cache-Control: no-store');
+?>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#FF4500">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="IMG/pwa-icon.svg">
+    <title>Usuarios · Administración CaféLiz</title>
 </head>
-<body>
+<body class="admin-page">
 <?php include("includes/navbar.php");?>
-<br><br><br><br><br><br>
-<div class="container">
-    <div class="row justify-content-md-center">
-        <div class="col-md-12">
-            <h1 class="text-center">
-                
-            </h1>
+<main class="admin-main">
+    <header class="admin-heading">
+        <div><span class="admin-eyebrow">CUENTAS Y PERMISOS</span><h1>Usuarios</h1><p>Consulta las cuentas y administra sus roles de acceso.</p></div>
+    </header>
+    <section class="admin-card" aria-label="Lista de usuarios">
             <?php include("PHP/MostrarUsuarios.php"); ?>
-        </div>
-    </div>
-</div>
-<br>
+    </section>
+</main>
 <?php include("includes/footer.html");?>
 <?php include("modalUsuarios/modalEditar.php") ?>
 <?php include("modalUsuarios/modalDeleteUser.php") ?>

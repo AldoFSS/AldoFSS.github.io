@@ -30,7 +30,7 @@
                             $consulta = "SELECT * FROM menucategoria";
                             $resultado = mysqli_query($connection, $consulta);
                             while ($catg = mysqli_fetch_array($resultado)) {
-                                echo "<option value='" . $catg['ID_Cat'] . "'>" . $catg['Categoria'] . "</option>";
+                                echo "<option value='" . $catg['ID_Cat'] . "'>" . htmlspecialchars($catg['Categoria'], ENT_QUOTES, 'UTF-8') . "</option>";
                             }
                             ?>
                         </select>

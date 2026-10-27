@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/seguridad.php'; exigirAdministrador(); ?>
 <style>
     .table td, .table th {
         text-align: center; /* Centra el texto en las celdas */
@@ -31,7 +32,7 @@
                 include('./BD/conexion.php');
                 
                 // Consulta para mostrar los pedidos en la tabla
-                $consulta = "SELECT ord.ID_Ordenes, user.nombre_usuario, product.Product_Nombre, DetOrd.Cantidad, DetOrd.Cantidad * product.Costo as Total, ord.Fecha_Compra FROM usuarios as User INNER JOIN ordenes as ord ON User.id = ord.ID_Usuario INNER JOIN detallesorden as DetOrd ON DetOrd.ID_Orden = ord.ID_Ordenes INNER JOIN menuproductos as product ON DetOrd.ID_Productos = product.id ORDER BY ord.ID_Ordenes;";
+                $consulta = "SELECT ord.ID_Ordenes, user.nombre_usuario, product.Product_Nombre, DetOrd.Cantidad, DetOrd.Cantidad * COALESCE(DetOrd.Precio_Unitario, product.Costo) as Total, ord.Fecha_Compra FROM usuarios as User INNER JOIN ordenes as ord ON User.id = ord.ID_Usuario INNER JOIN detallesorden as DetOrd ON DetOrd.ID_Orden = ord.ID_Ordenes INNER JOIN menuproductos as product ON DetOrd.ID_Productos = product.id ORDER BY ord.ID_Ordenes;";
                 $resultado = mysqli_query($connection,$consulta);
 
                 // Array para almacenar productos y sus cantidades
@@ -41,12 +42,12 @@
 
                 while($fila = mysqli_fetch_array($resultado)){
                     echo "<tr>";
-                    echo "<th scope='row'>{$fila['ID_Ordenes']}</th>";
-                    echo "<td>{$fila['nombre_usuario']}</td>";
-                    echo "<td>{$fila['Product_Nombre']}</td>";
-                    echo "<td>{$fila['Cantidad']}</td>";
-                    echo "<td>{$fila['Total']}</td>";
-                    echo "<td>{$fila['Fecha_Compra']}</td>";
+                    echo "<th scope='row'>" . htmlspecialchars((string) $fila['ID_Ordenes'], ENT_QUOTES, 'UTF-8') . "</th>";
+                    echo "<td>" . htmlspecialchars((string) $fila['nombre_usuario'], ENT_QUOTES, 'UTF-8') . "</td>";
+                    echo "<td>" . htmlspecialchars((string) $fila['Product_Nombre'], ENT_QUOTES, 'UTF-8') . "</td>";
+                    echo "<td>" . htmlspecialchars((string) $fila['Cantidad'], ENT_QUOTES, 'UTF-8') . "</td>";
+                    echo "<td>" . htmlspecialchars((string) $fila['Total'], ENT_QUOTES, 'UTF-8') . "</td>";
+                    echo "<td>" . htmlspecialchars((string) $fila['Fecha_Compra'], ENT_QUOTES, 'UTF-8') . "</td>";
                     echo "</tr>";
 
                     // Agregar productos al array
@@ -66,8 +67,8 @@
                 }
 
                 // Convertir los arrays a JSON para pasarlos a JavaScript
-                $productos_json = json_encode($productos);
-                $ventasPorMes_json = json_encode($ventasPorMes);
+                $productos_json = json_encode($productos, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+                $ventasPorMes_json = json_encode($ventasPorMes, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
             ?>
             </tbody>
         </table>

@@ -1,8 +1,12 @@
+<?php require_once __DIR__ . '/PHP/seguridad.php'; iniciarSesionSegura(); ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FF4500">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="IMG/pwa-icon.svg">
     <title>Document</title>
 </head>
 <body>
@@ -15,7 +19,7 @@
       <!--CAJAS-DE-ENTRADA-DE-DATOS------------------------------------------------>
          Regístrate<br>
         <br><input class="cajas" type="text" name="nombre_usuario" placeholder="Ingresa tu nombre" required maxlength="30">
-        <input class="cajas" type="password" name="contraseña_usuario" placeholder="Ingresa tu Password" required maxlength="30">
+        <input class="cajas" type="password" name="contraseña_usuario" minlength="8" placeholder="Ingresa tu Password" required maxlength="30">
         <!--BOTON-DE-REGISTRARSE-------------------------->
         <input type="submit" class="btnRegistro" value="Registrarme">
 

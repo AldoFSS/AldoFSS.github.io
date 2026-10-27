@@ -1,28 +1,32 @@
+<?php
+require_once __DIR__ . '/PHP/seguridad.php';
+exigirAdministrador();
+header('Cache-Control: no-store');
+?>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#FF4500">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="IMG/pwa-icon.svg">
     <link rel="stylesheet" href="CSS/home.css">
+    <title>Categorías · Administración CaféLiz</title>
 </head>
-<body>
+<body class="admin-page">
 <?php include("includes/navbar.php");?>
-<br><br>
-<div class="container">
-    <div class="row justify-content-md-center">
-        <div class="col-md-12">
-            <h1 class="text-center">
-                <span class="float-end">
-                    <button type="button" class="btn boton_m" data-bs-toggle="modal" data-bs-target="#agregarCategoriaModal">
-                        <i class="bi bi-person-plus"></i> Registrar Categoria
-                    </button>
-                </span>
-                <hr>
-            </h1>
+<main class="admin-main">
+    <header class="admin-heading">
+        <div><span class="admin-eyebrow">CATÁLOGO</span><h1>Categorías</h1><p>Organiza los productos por tipo para mantener el menú ordenado.</p></div>
+        <button type="button" class="btn boton_m" data-bs-toggle="modal" data-bs-target="#agregarCategoriaModal">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i> Registrar categoría
+        </button>
+    </header>
+    <section class="admin-card" aria-label="Lista de categorías">
             <?php include("PHP/MostrarCategorias.php"); ?>
-        </div>
-    </div>
-</div>
-<br>
+    </section>
+</main>
 <?php include("includes/footer.html");?>
 <?php  include("modales/modalEditCat.php")?>
 <?php  include("modales/modalCateg.php")?>

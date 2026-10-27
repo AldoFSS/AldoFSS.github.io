@@ -27,11 +27,11 @@
                             <select name="Categoria" class="form-select" required>
                                 <option selected value="">Seleccione</option>
                                 <?php
-                                include("../BD/conexion.php");
+                                include(__DIR__ . '/../BD/conexion.php');
                                 $consulta = "SELECT * FROM menucategoria";
                                 $resultado = mysqli_query($connection, $consulta);
                                 while ($catg = mysqli_fetch_array($resultado)) {
-                                    echo "<option value='" . $catg['ID_Cat'] . "'>" . $catg['Categoria'] . "</option>";
+                                    echo "<option value='" . $catg['ID_Cat'] . "'>" . htmlspecialchars($catg['Categoria'], ENT_QUOTES, 'UTF-8') . "</option>";
                                 }
                                 ?>
                             </select>
@@ -46,8 +46,11 @@
                             </button>
                         </div>
                     </form>
+                    <p class="small text-muted mt-3 mb-0">
+                        Después de registrar el producto, configura sus insumos y cantidades de receta en
+                        <a href="listInventario.php">Inventario y producción</a>.
+                    </p>
                 </div>
             </div>
         </div>
     </div>
-

@@ -1,129 +1,125 @@
+<?php
+require_once __DIR__ . '/PHP/seguridad.php';
+iniciarSesionSegura();
+$busqueda = isset($_GET['search']) && is_string($_GET['search']) ? trim($_GET['search']) : '';
+$categoria = filter_var($_GET['categoriaid'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 0;
+$menuUrl = function ($id) use ($busqueda) {
+    $parametros = [];
+    if ($id) $parametros['categoriaid'] = $id;
+    if ($busqueda !== '') $parametros['search'] = $busqueda;
+    return 'menu.php' . ($parametros ? '?' . http_build_query($parametros) : '');
+};
+?>
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FF4500">
+    <title data-i18n="documentTitle">Menú · Caféliz</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="IMG/pwa-icon.svg">
 </head>
-
-<body>
-    <style>
-        .img-fluid {
-            max-width: 100%;
-            height: auto;
-            object-fit: cover;
-        }
-    </style>
+<body class="menu-page">
     <?php include("includes/navbar.php"); ?>
-    <div class="menu-box">
+    <main class="menu-box">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="heading-title text-center">
-                        <h2>Especial de Caféliz</h2>
-                    </div>
-                </div>
+            <header class="menu-heading">
+                <span class="menu-eyebrow" data-i18n="eyebrow">PREPARADO PARA TI</span>
+                <h1 data-i18n="title">El menú de Caféliz</h1>
+                <p data-i18n="lead">Tu café favorito y algo rico para acompañarlo.</p>
+            </header>
+            <div class="menu-language-row">
+                <label for="menu-language" data-i18n="languageLabel">Idioma</label>
+                <select id="menu-language" name="language" aria-label="Idioma del menú"></select>
+                <span id="menu-translation-status" role="status" aria-live="polite"></span>
             </div>
-            <!-- Formulario de búsqueda -->
-            <div class="row">
-                <div class="col-lg-12">
-                    <form method="GET" action="menu.php" class="mb-4">
-                        <div class="d-flex">
-                            <input type="text" class="form-control" alt="buscar" name="search" placeholder="Buscar.."
-                                value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '' ?>">
-                            <button class="buscar" name="submit" type="submit">Buscar</button>
-                        </div>
-                    </form>
-                </div>
+            <form id="menu-search-form" method="GET" action="menu.php" class="menu-search" role="search">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <label class="visually-hidden" for="menu-search" data-i18n="searchLabel">Buscar en el menú</label>
+                <input id="menu-search" type="search" name="search" placeholder="¿Qué se te antoja hoy?"
+                    data-i18n-placeholder="searchPlaceholder"
+                    value="<?php echo htmlspecialchars($busqueda, ENT_QUOTES, 'UTF-8'); ?>">
+                <?php if ($categoria): ?><input type="hidden" name="categoriaid" value="<?php echo $categoria; ?>"><?php endif; ?>
+                <button type="submit" data-i18n="searchButton">Buscar</button>
+            </form>
+            <nav class="menu-categories" aria-label="Categorías del menú" data-i18n-aria="categoriesLabel">
+                <a class="menu-category <?php echo !$categoria ? 'is-active' : ''; ?>"
+                   <?php if (!$categoria) echo 'aria-current="page"'; ?>
+                   data-category-id="all" data-spanish-name="Todo el menú"
+                   href="<?php echo htmlspecialchars($menuUrl(0), ENT_QUOTES, 'UTF-8'); ?>">Todo el menú</a>
+                <?php
+                require("BD/conexion.php");
+                $categorias = $connection->query('SELECT ID_Cat, Categoria FROM menucategoria ORDER BY ID_Cat');
+                while ($cat = $categorias->fetch_assoc()):
+                ?>
+                    <a class="menu-category <?php echo $categoria === (int) $cat['ID_Cat'] ? 'is-active' : ''; ?>"
+                       <?php if ($categoria === (int) $cat['ID_Cat']) echo 'aria-current="page"'; ?>
+                       data-category-id="<?php echo (int) $cat['ID_Cat']; ?>"
+                       data-spanish-name="<?php echo htmlspecialchars($cat['Categoria'], ENT_QUOTES, 'UTF-8'); ?>"
+                       href="<?php echo htmlspecialchars($menuUrl((int) $cat['ID_Cat']), ENT_QUOTES, 'UTF-8'); ?>">
+                        <?php echo htmlspecialchars($cat['Categoria'], ENT_QUOTES, 'UTF-8'); ?>
+                    </a>
+                <?php endwhile; ?>
+            </nav>
+            <?php
+            $consulta = $connection->prepare('SELECT * FROM menuproductos WHERE (? = 0 OR id_categoria = ?) ORDER BY id');
+            $consulta->bind_param('ii', $categoria, $categoria);
+            $consulta->execute();
+            $resultado = $consulta->get_result();
+            ?>
+            <div class="menu-results">
+                <span id="menu-results-count"><?php echo $resultado->num_rows; ?> opciones para disfrutar</span>
+                <span><span data-i18n="madeToOrder">Hecho al momento</span> <i class="bi bi-cup-hot" aria-hidden="true"></i></span>
             </div>
-            <div class="container mt-4">
-                <!-- Categorías -->
-                <div class="row mb-3">
-                    <div class="col-12">
-                        <div class="d-flex flex-wrap justify-content-center">
-                            <a class="btn boton_m categoria mx-2 mb-2" href="menu.php">TODOS</a>
-                            <?php
-                            include("BD/conexion.php");
-                            $datab = "cafeteria";
-                            $db = mysqli_select_db($connection, $datab);
-                            $consulta = "SELECT * FROM menucategoria";
-                            $resultado = mysqli_query($connection, $consulta);
-                            while ($fila = mysqli_fetch_array($resultado)) {
-                                ?>
-                                <a class="btn boton_m categoria mx-2 mb-2"
-                                    href="menu.php?categoriaid=<?php echo $fila['ID_Cat'] ?>">
-                                    <?php echo $fila['Categoria']; ?>
-                                </a>
-                            <?php } ?>
+            <p class="menu-barista-note" id="barista-translation-note" data-i18n="baristaNote">
+                El nombre original del producto en español se enviará a barra.
+            </p>
+            <div class="menu-grid" id="lista-productos">
+                <?php while ($fila = $resultado->fetch_assoc()):
+                    $nombre = htmlspecialchars($fila['Product_Nombre'], ENT_QUOTES, 'UTF-8');
+                    $descripcion = $fila['Descripcion'] ?: '';
+                    $imagen = htmlspecialchars(substr($fila['Imagen'], 1), ENT_QUOTES, 'UTF-8');
+                    $precio = number_format((float) $fila['Costo'], 2, '.', '');
+                ?>
+                    <article class="menu-product gallery-single" data-product-id="<?php echo (int) $fila['id']; ?>"
+                        data-spanish-name="<?php echo $nombre; ?>"
+                        data-spanish-description="<?php echo htmlspecialchars($descripcion, ENT_QUOTES, 'UTF-8'); ?>">
+                        <div class="menu-product-image">
+                            <img src="<?php echo $imagen; ?>" alt="<?php echo $nombre; ?>" loading="lazy" width="480" height="360">
+                            <span class="product-in-cart" data-cart-quantity="<?php echo (int) $fila['id']; ?>" hidden></span>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Productos -->
-                <div class="row">
-                    <div class="col-12" id="lista-productos">
-                        <div class="tab-content" id="v-pills-tabContent">
-                            <div class="tab-pane fade show active" id="v-pills-all" role="tabpanel"
-                                aria-labelledby="v-pills-all-tab">
-                                <div class="row">
-                                    <?php
-                                    include("BD/conexion.php");
-                                    $datab = "cafeteria";
-                                    $db = mysqli_select_db($connection, $datab);
-
-                                    $search_query = '';
-                                    if (isset($_GET['search']) && !empty($_GET['search'])) {
-                                        $search = mysqli_real_escape_string($connection, $_GET['search']);
-                                        $search_query = " AND Product_Nombre LIKE '%$search%'";
-                                    }
-
-                                    if (isset($_GET['categoriaid']) && !empty($_GET['categoriaid'])) {
-                                        $categoria_id = $_GET['categoriaid'];
-                                        $consulta = "SELECT * FROM menuproductos WHERE id_categoria = $categoria_id $search_query";
-                                    } else {
-                                        $consulta = "SELECT * FROM menuproductos WHERE 1=1 $search_query";
-                                    }
-
-                                    $resultado = mysqli_query($connection, $consulta);
-                                    if (mysqli_num_rows($resultado) > 0) {
-                                        while ($fila = mysqli_fetch_array($resultado)) {
-                                            ?>
-                                            <div class="col-lg-4 col-md-6 mb-4">
-                                                <div class="gallery-single fix">
-                                                    <img src="<?php echo substr($fila['Imagen'], 1) ?>" class="img-fluid"
-                                                        alt="Image">
-                                                    <div class="why-text">
-                                                        <h4 class="my-0 font-weight-bold"><?php echo $fila['Product_Nombre'] ?>
-                                                        </h4>
-                                                        <p><?php echo $fila['Descripcion'] ?></p>
-                                                        <h5 class="card-title pricing-card-title precio">
-                                                            $<span><?php echo $fila['Costo'] ?></span></h5>
-                                                        <?php
-                                                        if (isset($_SESSION['nombre_usuario']))
-                                                            echo '<a class="agregar-carrito text-decoration-none" href="#" data-id=' . $fila["id"] . '>Comprar</a>';
-                                                        ?>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <?php
-                                        }
-                                    } else {
-                                        echo "<p class='text-center'>No se encontraron productos para esta búsqueda.</p>";
-                                    }
-                                    mysqli_free_result($resultado);
-                                    mysqli_close($connection);
-                                    ?>
-                                </div>
+                        <div class="menu-product-info">
+                            <h2><?php echo $nombre; ?></h2>
+                            <p><?php echo htmlspecialchars($fila['Descripcion'] ?: 'Preparado al momento, para disfrutar a tu gusto.', ENT_QUOTES, 'UTF-8'); ?></p>
+                            <div class="menu-product-bottom">
+                                <span class="menu-product-price">$<?php echo $precio; ?></span>
+                                <?php if (isset($_SESSION['nombre_usuario'])): ?>
+                                    <button type="button" class="agregar-carrito"
+                                        data-id="<?php echo (int) $fila['id']; ?>"
+                                        data-name="<?php echo $nombre; ?>" data-display-name="<?php echo $nombre; ?>"
+                                        data-price="<?php echo $precio; ?>" data-image="<?php echo $imagen; ?>"
+                                        aria-label="Agregar <?php echo $nombre; ?> al carrito">
+                                        <i class="bi bi-plus-lg" aria-hidden="true"></i><span data-i18n="add">Agregar</span>
+                                    </button>
+                                <?php else: ?>
+                                    <a class="product-login" href="login.php"><span data-i18n="loginToOrder">Inicia sesión para pedir</span> <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                                <?php endif; ?>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </article>
+                <?php endwhile; ?>
             </div>
-
+            <div class="menu-no-results" <?php echo $resultado->num_rows ? 'hidden' : ''; ?>>
+                <i class="bi bi-search" aria-hidden="true"></i><h2 data-i18n="noResultsTitle">No encontramos ese antojo</h2>
+                <p data-i18n="noResultsDescription">Prueba con otro nombre o explora todo el menú.</p>
+                <a href="menu.php" data-i18n="seeFullMenu">Ver todo el menú</a>
+            </div>
+            <?php $connection->close(); ?>
         </div>
-    </div>
+    </main>
     <?php include("includes/footer.html"); ?>
+    <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="JS/menu-i18n.js?v=1"></script>
 </body>
-<script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-
 </html>

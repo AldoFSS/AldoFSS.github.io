@@ -1,12 +1,13 @@
+<?php require_once __DIR__ . '/seguridad.php'; exigirAdministrador(); ?>
 <style>
         .table td, .table th {
             text-align: center; /* Centra el texto en las celdas */
         }
-        
+
         .table .btn {
             margin: 0 5px; /* Espacio entre los botones */
         }
-        
+
         .table .btn-group {
             display: flex;
             border-radius: 10px;
@@ -37,20 +38,20 @@
             while($fila = mysqli_fetch_array($resultado)){
             $ImgRuta = substr($fila['Imagen'],1);
             echo "<tr>";
-            echo "<th scope='row'>{$fila['id']}</th>";
-            echo "<td>{$fila['Product_Nombre']}</td>";
-            echo "<td>{$fila['Costo']}</td>";
-            echo "<td>{$fila['Descripcion']}</td>";
-            echo "<td>{$fila['Categoria']}</td>";
-            echo "<td> <img class='rounded-circle' src='{$ImgRuta}' class='img-fluid' width='50' height='50' alt='...'></td>";
+            echo "<th scope='row'>" . htmlspecialchars((string) $fila['id'], ENT_QUOTES, 'UTF-8') . "</th>";
+            echo "<td>" . htmlspecialchars((string) $fila['Product_Nombre'], ENT_QUOTES, 'UTF-8') . "</td>";
+            echo "<td>" . htmlspecialchars((string) $fila['Costo'], ENT_QUOTES, 'UTF-8') . "</td>";
+            echo "<td>" . htmlspecialchars((string) $fila['Descripcion'], ENT_QUOTES, 'UTF-8') . "</td>";
+            echo "<td>" . htmlspecialchars((string) $fila['Categoria'], ENT_QUOTES, 'UTF-8') . "</td>";
+            echo "<td> <img class='rounded-circle' src='" . htmlspecialchars($ImgRuta, ENT_QUOTES, 'UTF-8') . "' class='img-fluid' width='50' height='50' alt='...'></td>";
             echo "<td>
                     <div class='btn-group'>
-                        <a href='#' aria-label='Editar producto' class='btn boton_m' data-bs-toggle='modal' data-bs-target='#EditarProductoModal' 
-                            data-id='{$fila['id']}' data-nombre='{$fila['Product_Nombre']}' data-descripcion='{$fila['Descripcion']}' 
-                            data-costo='{$fila['Costo']}' data-categoria='{$fila['id_categoria']}' data-imagen='{$fila['Imagen']}'>
+                        <a href='#' aria-label='Editar producto' class='btn boton_m' data-bs-toggle='modal' data-bs-target='#EditarProductoModal'
+                            data-id='" . htmlspecialchars((string) $fila['id'], ENT_QUOTES, 'UTF-8') . "' data-nombre='" . htmlspecialchars((string) $fila['Product_Nombre'], ENT_QUOTES, 'UTF-8') . "' data-descripcion='" . htmlspecialchars((string) $fila['Descripcion'], ENT_QUOTES, 'UTF-8') . "'
+                            data-costo='" . htmlspecialchars((string) $fila['Costo'], ENT_QUOTES, 'UTF-8') . "' data-categoria='" . htmlspecialchars((string) $fila['id_categoria'], ENT_QUOTES, 'UTF-8') . "' data-imagen='" . htmlspecialchars((string) $fila['Imagen'], ENT_QUOTES, 'UTF-8') . "'>
                             <i class='bi bi-pencil-square'></i>
                         </a>
-                        <a href='#' aria-label='Eliminar producto' class='btn boton_m' data-bs-toggle='modal' data-bs-target='#DeleteModal' data-id='{$fila['id']}'>
+                        <a href='#' aria-label='Eliminar producto' class='btn boton_m' data-bs-toggle='modal' data-bs-target='#DeleteModal' data-id='" . htmlspecialchars((string) $fila['id'], ENT_QUOTES, 'UTF-8') . "'>
                             <i class='bi bi-trash'></i>
                         </a>
                     </div>

@@ -1,49 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Hojas de estilo CSS -->
-<link rel="stylesheet" href="node_modules/bootstrap-icons/font/bootstrap-icons.min.css" />
-<link rel="stylesheet" href="CSS/estilos.css">
-<link rel="stylesheet" href="CSS/home.css">
 <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="node_modules/bootstrap-icons/font/bootstrap-icons.min.css" />
 <link rel="stylesheet" href="node_modules/datatables.net-bs5/css/dataTables.bootstrap5.css"/>
 <link rel="stylesheet" href="node_modules/toastr/build/toastr.min.css"/>
 <link rel="stylesheet" href="Awesome/css/fontawesome.css">
 <link rel="stylesheet" href="Awesome/css/solid.css">
+<link rel="stylesheet" href="CSS/estilos.css">
+<link rel="stylesheet" href="CSS/home.css">
+<link rel="stylesheet" href="CSS/pwa.css">
+<link rel="stylesheet" href="CSS/menu-cart.css?v=5">
+<link rel="stylesheet" href="CSS/admin.css?v=2">
 
 <!-- Scripts JavaScript -->
 <script src="node_modules/jquery/dist/jquery.min.js"></script>
 <script src="node_modules/chart.js/dist/chart.umd.js"></script>
-<script src="JS/main.js"></script>
+<script src="JS/main.js?v=3"></script>
 
 </head>
 
 <body>
   <?php 
-  session_start();
+  require_once __DIR__ . '/../PHP/seguridad.php';
+  iniciarSesionSegura();
   ?>
   <div class="Barra">
-    <nav class="navbar navbar-expand-lg ftco_navbar ftco-navbar-light" id="ftco-navbar" style="z-index: 10;">
+    <nav class="navbar navbar-expand-xxl ftco_navbar ftco-navbar-light" id="ftco-navbar" style="z-index: 10;">
       <div class="container">
       <img src="./IMG/CAFELIZ.png" alt="logo de la Cafeteria" width="50px" height="50px">
         <a class="navbar-brand" href="index.php">CAFELIZ</a>
-        <div class="navbar-date">
-          <script type="text/javascript">
-          function makeArray() {
-            for (i = 0; i < makeArray.arguments.length; i++) this[i + 1] = makeArray.arguments[i];
-          }
-          var months = new makeArray('01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12');
-          var date = new Date();
-          var day = date.getDate();
-          var month = date.getMonth() + 1;
-          var yy = date.getYear();
-          var year = (yy < 1000) ? yy + 1900 : yy;
-          document.write(day + "/" + months[month] + "/" + year);
-        </script>
-        </div>
-        <button id="open_cart">
+        <span class="navbar-date"><?php echo date('d/m/Y'); ?></span>
+        <button id="open_cart" type="button" aria-label="Ver carrito" aria-controls="sidecart" aria-expanded="false">
           <div class="cart">
             <div class="cart_container d-flex flex-row">
               <div class="cart_icon">
@@ -56,75 +46,71 @@
             </div>
           </div>
         </button>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="fa fa-bars"></span> Menu
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Abrir navegación" data-i18n-aria="navToggleAria">
+          <span class="fa fa-bars"></span> <span data-i18n="navToggle">Menú</span>
         </button>
 
-        <div id="sidecart" class="sidecart">
-          <div class="cart-content">
-            <div class="cart_header">
-              <span class="fa-solid fa-universal-access"></span>
-              <div class="header_title">
-                <h2 id="username-title">
-                  
-                  <?php
-                    if (isset($_SESSION['nombre_usuario'])) {
-                      echo ($_SESSION['nombre_usuario']);
-                    } else {
-                      echo 'USER';
-                    }
-                  ?>
-                </h2>
-                <span id="close_btn" class="close_btn">&times;</span>
-              </div>
+        <aside id="sidecart" class="sidecart" role="dialog" aria-modal="true" aria-labelledby="cart-title" aria-hidden="true" inert>
+          <header class="cart_header">
+            <div>
+              <span class="cart-kicker" data-i18n="cartKicker">UN MOMENTO PARA DISFRUTAR</span>
+              <h2 id="cart-title" data-i18n="cartTitle">Tu carrito</h2>
+              <p id="cart-item-count">0 productos en tu pedido</p>
             </div>
-            <!-- ITEM 1 -->
-            <div style="overflow-y: scroll; height: 40vh;">
-              <div class="cart_items">
-                <div class="cart_item"></div>
-              </div>
-              <!-- END ITEM 1 -->
-            </div>
-            <div class="cart_actions">
-              <div class="subtotal">
-                <p>SUBTOTAL</p>
-                <p>$<span id="subtotal_price">0</span></p>
-              </div>
-              <button id="empty_cart" class="btn ">Vaciar</button>
-              <button id="sales_cart" type="button" class="btn" data-bs-toggle="modal" data-bs-target="#checkoutModal">
-                Comprar
-              </button>
-            </div>
-          </div>
+            <button id="close_btn" type="button" aria-label="Cerrar carrito" data-i18n-aria="closeCart"><i class="bi bi-x" aria-hidden="true"></i></button>
+          </header>
+          <div class="cart_items"></div>
+          <footer class="cart_actions">
+            <div class="subtotal"><p data-i18n="estimatedTotal">Total estimado</p><p>$<span id="subtotal_price">0.00</span></p></div>
+            <p class="cart-note" data-i18n="cartNote">Un paso más y tu pedido estará listo para registrar.</p>
+            <button id="sales_cart" type="button" disabled><span data-i18n="continueOrder">Continuar con mi pedido</span> <i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+            <button id="empty_cart" type="button" disabled data-i18n="emptyCartButton">Vaciar carrito</button>
+          </footer>
+        </aside>
+        <div class="backdrop" aria-hidden="true"></div>
+        <div id="cart-toast" class="cart-toast" role="status" aria-live="polite" aria-atomic="true">
+          <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+          <div><strong data-i18n="addedToCart">Agregado a tu carrito</strong><p></p></div>
+          <button type="button" data-open-cart hidden><span data-i18n="viewCart">Ver carrito</span> <i class="bi bi-arrow-right" aria-hidden="true"></i></button>
         </div>
-        
-        <div class="backdrop"></div>
 
         <div class="collapse navbar-collapse" id="navbarNav">  
-          <ul class="navbar-nav ml-auto mr-md-3 align-items-center">
-            <li class="nav-item"><a href="./index.php" class="nav-link">Home</a></li>
-            <li class="nav-item"><a href="./menu.php" class="nav-link">Menu</a></li>
-            <li class="nav-item"><a href="./login.php" class="nav-link">Sesion</a></li>
-            <?php
-           
-            if (isset($_SESSION['user_Cargo']) && $_SESSION['user_Cargo'] == 'administrador') {
-              echo '<li class="nav-item dropdown">';
-              echo '<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">BD</a>';
-              echo '<ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">';
-              echo '<li><a class="dropdown-item" href="./listProductos.php">Productos</a></li>';
-              echo '<li><a class="dropdown-item" href="./listUsuarios.php">Usuarios</a></li>';
-              echo '<li><a class="dropdown-item" href="./listPedidos.php">Pedidos</a></li>';
-              echo '<li><a class="dropdown-item" href="./listCategorias.php">Categorias</a></li>';
-              echo '</ul>';
-              echo '</li>';
-            }
-            ?>
+          <ul class="navbar-nav align-items-lg-center">
+            <li class="nav-item"><a href="./index.php" class="nav-link" data-i18n="homeNav">Home</a></li>
+            <li class="nav-item"><a href="./menu.php" class="nav-link" data-i18n="menuNav">Menu</a></li>
+            <li class="nav-item"><a href="./reservas.php" class="nav-link" data-i18n="reservationsNav">Reservar espacio</a></li>
+            <li class="nav-item"><a href="./login.php" class="nav-link" data-i18n="loginNav">Sesion</a></li>
+            <?php if (!empty($_SESSION['ID_Usuario']) && in_array($_SESSION['user_Cargo'] ?? '', ['usuario', 'barista', 'administrador'], true)): ?>
+              <li class="nav-item"><a href="./verde.php" class="nav-link">Huella verde</a></li>
+            <?php endif; ?>
+            <?php if (in_array($_SESSION['user_Cargo'] ?? '', ['barista', 'administrador'], true)): ?>
+              <li class="nav-item"><a href="./verde-barra.php" class="nav-link">Caja verde</a></li>
+            <?php endif; ?>
+            <?php if (($_SESSION['user_Cargo'] ?? '') === 'administrador'): ?>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="adminNavMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administración</a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminNavMenu">
+                  <li><a class="dropdown-item" href="./listProductos.php"><i class="bi bi-cup-hot" aria-hidden="true"></i> Productos</a></li>
+                  <li><a class="dropdown-item" href="./listCategorias.php"><i class="bi bi-tags" aria-hidden="true"></i> Categorías</a></li>
+                  <li><a class="dropdown-item" href="./listUsuarios.php"><i class="bi bi-people" aria-hidden="true"></i> Usuarios</a></li>
+                  <li><a class="dropdown-item" href="./listPedidos.php"><i class="bi bi-receipt" aria-hidden="true"></i> Pedidos</a></li>
+                  <li><a class="dropdown-item" href="./listInventario.php"><i class="bi bi-box-seam" aria-hidden="true"></i> Inventario</a></li>
+                </ul>
+              </li>
+            <?php endif; ?>
           </ul>
+        </div>
+        <div class="pwa-actions" aria-label="Estado de la aplicación">
+          <span id="pwa-status" class="pwa-status" role="status" aria-live="polite"></span>
+          <button id="pwa-install" class="pwa-install" type="button" hidden>
+            Instalar app
+          </button>
         </div>
       </div>
     </nav>
   </div>
   
   <?php include("./PHP/compra.php") ?>
+  <script src="JS/pwa.js" defer></script>
 </body>
 </html>

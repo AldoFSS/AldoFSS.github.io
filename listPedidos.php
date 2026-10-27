@@ -1,40 +1,42 @@
+<?php
+require_once __DIR__ . '/PHP/seguridad.php';
+exigirAdministrador();
+header('Cache-Control: no-store');
+?>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#FF4500">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="IMG/pwa-icon.svg">
+    <title>Pedidos · Administración CaféLiz</title>
 </head>
-<body>
+<body class="admin-page">
 <?php include("includes/navbar.php"); ?>
-<br><br>
-<div class="container">
-    <div class="row justify-content-md-center">
-        <div class="col-md-12">
-            <h3>Filtrar Productos por</h3>
+<main class="admin-main">
+    <header class="admin-heading admin-heading-stacked">
+        <div><span class="admin-eyebrow">VENTAS</span><h1>Pedidos</h1><p>Revisa las órdenes y consulta el resumen de ventas.</p></div>
+        <div class="admin-toolbar">
+            <label for="productFilter">Mostrar por</label>
             <select id="productFilter" class="form-select">
                 <option value="mas_vendidos">Productos Más Vendidos</option>
                 <option value="total_mes">Total Vendido por Mes</option>
             </select>
-            <br>
-            <h1 class="text-center">
-                <span class="float-start">
-                    <button type="button" id="btnShowGraph" class="btn boton_m">
-                        <i class="bi bi-bar-chart"></i> Mostrar Gráfica
-                    </button>
-                </span>
-                <hr>
-            </h1>
-
-            <!-- Tabla de Pedidos -->
-            <?php include("PHP/MostrarPedidos.php"); ?>
-
-            <!-- Div para la Gráfica -->
-            <div id="salesChartContainer" class="mt-5">
-                <canvas id="salesChart"></canvas>
-            </div>
+            <button type="button" id="btnShowGraph" class="btn boton_m">
+                <i class="bi bi-bar-chart" aria-hidden="true"></i> Mostrar gráfica
+            </button>
         </div>
-    </div>
-</div>
-<br>
+    </header>
+    <section class="admin-card" aria-label="Historial de pedidos">
+            <?php include("PHP/MostrarPedidos.php"); ?>
+    </section>
+    <section class="admin-card admin-chart" id="salesChartContainer" aria-label="Gráfica de ventas">
+        <h2>Resumen de ventas</h2>
+        <canvas id="salesChart"></canvas>
+    </section>
+</main>
 <script>
     $(document).ready(function() {
         // Inicializar DataTables
@@ -79,8 +81,8 @@
                     datasets: [{
                         label: label,
                         data: data,
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(255, 69, 0, 0.2)',
+                        borderColor: '#FF4500',
                         borderWidth: 1
                     }]
                 },

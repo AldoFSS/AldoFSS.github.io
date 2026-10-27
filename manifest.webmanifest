@@ -1,0 +1,31 @@
+{
+  "id": "./",
+  "name": "Cafeliz - Cafetería",
+  "short_name": "Cafeliz",
+  "description": "Explora el menú de Cafeliz y disfruta de café, bebidas, desayunos y postres.",
+  "lang": "es-MX",
+  "start_url": "./index.php",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#fffaf4",
+  "theme_color": "#5b321e",
+  "categories": ["food", "lifestyle"],
+  "icons": [
+    {
+      "src": "IMG/pwa-icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ver menú",
+      "short_name": "Menú",
+      "url": "./menu.php",
+      "icons": [{ "src": "IMG/pwa-icon.svg", "sizes": "192x192 512x512", "type": "image/svg+xml" }]
+    }
+  ]
+}

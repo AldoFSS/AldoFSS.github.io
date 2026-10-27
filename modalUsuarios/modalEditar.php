@@ -19,6 +19,7 @@
         <select id="cargo_editar" name="Cargo" class="form-select" required>
             <option selected value="">Seleccione</option>
             <option value="administrador">administrador</option>
+            <option value="barista">barista</option>
             <option value="usuario">usuario</option>
         </select>
     </div>
@@ -32,4 +33,3 @@
         </div>
     </div>
 </div>
-

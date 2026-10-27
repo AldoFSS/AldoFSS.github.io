@@ -30,46 +30,29 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title" id="paymentModalLabel">Detalles del Pago</h3>
+                <h3 class="modal-title" id="paymentModalLabel" data-i18n="checkoutTitle">Confirmar pedido</h3>
             </div>
             <div class="modal-body">
                 <div class="row gx-3">
                     <div class="col-12">
                         <div class="d-flex flex-column">
-                            <label for="personName" class="text mb-1">Nombre:</label>
-                            <input class="form-control mb-3" id="personName" name="personName" type="text" placeholder="Nombre" required>
+                            <label for="personName" class="text mb-1" data-i18n="nameLabel">Nombre:</label>
+                            <input class="form-control mb-3" id="personName" name="personName" type="text" placeholder="Nombre" data-i18n-placeholder="namePlaceholder" required>
                         </div>
                     </div>
                     <div class="col-12">
                         <div class="d-flex flex-column">
-                            <label for="email" class="text mb-1">Correo:</label>
-                            <input class="form-control mb-3" id="email" name="email" type="email" placeholder="Correo" required>
+                            <label for="email" class="text mb-1" data-i18n="emailLabel">Correo:</label>
+                            <input class="form-control mb-3" id="email" name="email" type="email" placeholder="Correo" data-i18n-placeholder="emailPlaceholder" required>
                         </div>
                     </div>
-                    <div class="col-12">
-                        <div class="d-flex flex-column">
-                            <label for="cardNumber" class="text mb-1">Número de la Tarjeta:</label>
-                            <input class="form-control mb-3" id="cardNumber" name="cardNumber" type="text" placeholder="1234 5678 4356 7890" required>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="d-flex flex-column">
-                            <label for="expiryDate" class="text mb-1">Expiración:</label>
-                            <input class="form-control mb-3" id="expiryDate" name="expiryDate" type="text" placeholder="MM/YYYY" required>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="d-flex flex-column">
-                            <label for="cvv" class="text mb-1">CVV/CVC:</label>
-                            <input class="form-control mb-3 pt-2" id="cvv" name="cvv" type="password" placeholder="***" required>
-                        </div>
-                    </div>
+                    <p class="text-muted" data-i18n="paymentNote">Se registrará tu pedido. El pago se realiza en caja; esta aplicación todavía no procesa tarjetas.</p>
                 </div>
             </div>
             <div class="modal-footer">
                 <div class="btn-group-vertical w-100">
                     <button type="button" class="btn boton_m" id="payButton">
-                        <span class="ps-3" id="totalAmount"> Pagar $0.00</span>
+                        <span class="ps-3" id="totalAmount" data-i18n="registrationButton"> Registrar pedido</span>
                     </button>
                 </div>
             </div>
@@ -81,4 +64,3 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 </html>
-

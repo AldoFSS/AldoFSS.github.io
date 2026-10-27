@@ -1,0 +1,56 @@
+.reservas-page { min-height: 100vh; background: #f4f6f8; color: #232a34; }
+.reservas-main { max-width: 1160px; margin: 0 auto; padding: 42px 24px 72px; }
+.reservas-heading { max-width: 700px; margin: 0 auto 30px; text-align: center; }
+.reservas-eyebrow { color: #FF4500; font-size: 11px; font-weight: 700; letter-spacing: .2em; }
+.reservas-heading h1 { margin: 12px 0 10px; font: 500 clamp(32px, 4vw, 48px)/1.15 Georgia, serif; letter-spacing: -.035em; }
+.reservas-heading p, .plano-heading > p { color: #68717d; line-height: 1.65; }
+.pases-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; max-width: 850px; margin: 0 auto 26px; }
+.pase-card { padding: 22px 24px; border: 1px solid #e1e5ea; border-radius: 18px; background: #fff; }
+.pase-card.pase-activo { border-color: #FF4500; box-shadow: 0 0 0 2px rgb(255 69 0 / 12%); }
+.pase-card > span { color: #FF4500; font-size: 10px; font-weight: 700; letter-spacing: .16em; }
+.pase-card h2 { margin: 8px 0; font: 500 22px Georgia, serif; }
+.pase-card p { min-height: 42px; margin: 0 0 15px; color: #68717d; font-size: 13px; line-height: 1.55; }
+.pase-card strong { font-size: 22px; }
+.pase-card small { color: #68717d; font-size: 11px; }
+.busqueda-reservas { display: grid; grid-template-columns: 1fr 1fr 1.4fr 1.5fr auto; align-items: end; gap: 13px; padding: 20px; border: 1px solid #e1e5ea; border-radius: 18px; background: #fff; }
+.busqueda-reservas label { display: grid; gap: 7px; color: #232a34; font-size: 12px; font-weight: 650; }
+.busqueda-reservas input, .busqueda-reservas select { width: 100%; min-width: 0; height: 43px; padding: 0 10px; border: 1px solid #e1e5ea; border-radius: 10px; background: #fff; color: #232a34; font: inherit; }
+.busqueda-reservas button, .mesa-card button { min-height: 43px; padding: 10px 15px; border: 0; border-radius: 11px; background: #FF4500; color: #fff; font-size: 13px; font-weight: 650; white-space: nowrap; }
+.busqueda-reservas button:hover, .mesa-card button:hover { background: #d83b00; }
+.plano-section { margin-top: 40px; }
+.plano-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 17px; }
+.plano-heading h2 { margin: 7px 0 0; font: 500 30px Georgia, serif; }
+.plano-heading > p { max-width: 420px; margin: 0; font-size: 12px; }
+.plano-mesas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 22px; border: 1px solid #e1e5ea; border-radius: 22px; background: repeating-linear-gradient(0deg, #f7f8fa, #f7f8fa 46px, #eef1f4 47px, #eef1f4 48px); }
+.mesa-card { min-width: 0; padding: 19px; border: 1px solid #e1e5ea; border-radius: 16px; background: #fff; box-shadow: 0 6px 20px rgb(35 42 52 / 5%); }
+.mesa-card.mesa-ocupada { opacity: .63; }
+.mesa-icono { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; background: #fff1eb; color: #FF4500; font-size: 18px; }
+.mesa-card h3 { margin: 12px 0 9px; font-size: 17px; font-weight: 650; }
+.mesa-card ul { min-height: 77px; margin: 0 0 14px; padding: 0; list-style: none; }
+.mesa-card li { margin: 5px 0; color: #68717d; font-size: 11px; line-height: 1.45; }
+.mesa-card li i { margin-right: 5px; color: #FF4500; }
+.mesa-card form { margin: 0; }
+.mesa-card button { width: 100%; }
+.mesa-login, .mesa-estado { display: block; padding: 12px 0 0; color: #FF4500; font-size: 12px; font-weight: 650; text-align: center; text-decoration: none; }
+.mesa-estado { color: #68717d; }
+.sin-espacios { padding: 25px; border-radius: 14px; background: #fff; color: #68717d; text-align: center; }
+.reserva-aviso { max-width: 850px; margin: 0 auto 18px; padding: 14px 18px; border-radius: 12px; font-size: 13px; line-height: 1.5; }
+.reserva-aviso-ok { border: 1px solid #cfe2d1; background: #edf6ec; color: #32633d; }
+.reserva-aviso-error { border: 1px solid #f0c9bd; background: #fff1ec; color: #8d3926; }
+.reserva-nota { margin: 18px 0 0; color: #68717d; font-size: 11px; text-align: center; }
+.reservas-page :focus-visible { outline: 3px solid #FF4500; outline-offset: 3px; }
+@media (max-width: 900px) {
+    .reservas-main { padding-top: 30px; }
+    .busqueda-reservas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .busqueda-reservas button { grid-column: 1 / -1; }
+    .plano-mesas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 575px) {
+    .reservas-main { padding: 25px 15px 48px; }
+    .pases-grid, .plano-mesas { grid-template-columns: 1fr; }
+    .pase-card { padding: 18px; }
+    .plano-heading { display: block; }
+    .plano-heading > p { margin-top: 10px; }
+    .plano-mesas { padding: 13px; }
+    .mesa-card ul { min-height: 0; }
+}
