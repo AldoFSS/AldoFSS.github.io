@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/PHP/seguridad.php';
 iniciarSesionSegura();
+header('Cache-Control: ' . (!empty($_SESSION['ID_Usuario']) ? 'no-store' : 'private, no-cache, must-revalidate'));
 $busqueda = isset($_GET['search']) && is_string($_GET['search']) ? trim($_GET['search']) : '';
 $categoria = filter_var($_GET['categoriaid'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 0;
 $menuUrl = function ($id) use ($busqueda) {
@@ -15,10 +16,12 @@ $menuUrl = function ($id) use ($busqueda) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#FF4500">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#FFFFFF">
     <title data-i18n="documentTitle">Menú · Caféliz</title>
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="apple-touch-icon" href="IMG/pwa-icon.svg">
+    <link rel="apple-touch-icon" href="IMG/cafeliz-pwa-192-v2.png">
 </head>
 <body class="menu-page">
     <?php include("includes/navbar.php"); ?>
@@ -120,6 +123,6 @@ $menuUrl = function ($id) use ($busqueda) {
     </main>
     <?php include("includes/footer.html"); ?>
     <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="JS/menu-i18n.js?v=1"></script>
+    <script src="JS/menu-i18n.js?v=2"></script>
 </body>
 </html>

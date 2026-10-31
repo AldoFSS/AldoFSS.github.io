@@ -1,12 +1,14 @@
-<?php require_once __DIR__ . '/PHP/seguridad.php'; iniciarSesionSegura(); ?>
+<?php require_once __DIR__ . '/PHP/seguridad.php'; iniciarSesionSegura(); header('Cache-Control: ' . (!empty($_SESSION['ID_Usuario']) ? 'no-store' : 'private, no-cache, must-revalidate')); ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es-MX">
 <head>
     <meta charset="UTF-8" >
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#FF4500">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#FFFFFF">
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="apple-touch-icon" href="IMG/pwa-icon.svg">
+    <link rel="apple-touch-icon" href="IMG/cafeliz-pwa-192-v2.png">
     <!-- Lightbox CSS -->
     <link rel="stylesheet"href="node_modules/lightbox2/dist/css/lightbox.min.css";>
   <!----------------------------------------------------------------------------------------------->

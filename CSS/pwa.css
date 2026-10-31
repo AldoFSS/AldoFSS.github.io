@@ -1,5 +1,6 @@
 .pwa-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
@@ -9,6 +10,10 @@
 .pwa-status {
   color: #232a34;
   font-size: 0.8rem;
+}
+
+#pwa-feedback {
+  flex-basis: 100%;
 }
 
 .pwa-status:empty {
@@ -60,4 +65,23 @@
   .modal-body { max-height: 75dvh; overflow-y: auto; }
   input, select, textarea { font-size: 16px; }
   .table-responsive { overflow-x: auto; }
+}
+.pwa-offline-banner {
+  position: relative;
+  z-index: 20;
+  margin: 1rem auto;
+  padding: 0.85rem 1rem;
+  max-width: 72rem;
+  border: 1px solid #d6a64f;
+  border-radius: 0.75rem;
+  background: #fff7df;
+  color: #513b12;
+  font-weight: 600;
+}
+
+.offline-read-only main button,
+.offline-read-only main input,
+.offline-read-only main select,
+.offline-read-only main textarea {
+  cursor: not-allowed;
 }

@@ -50,6 +50,8 @@ try:
     ids = []
     category = product = None
     inventory = None
+    coworking_space = None
+    coworking_reservation = None
     try:
         sql("INSERT INTO usuarios (nombre_usuario, contraseña_usuario, Cargo) VALUES ('"+token+"','"+hashlib.md5(password.encode()).hexdigest()+"','usuario'), ('"+token+"_admin','"+hash_value+"','administrador'), ('"+token+"_barista','"+hash_value+"','barista')")
         ids = sql("SELECT id FROM usuarios WHERE nombre_usuario IN ('"+token+"','"+token+"_admin','"+token+"_barista')").splitlines()
@@ -65,11 +67,70 @@ try:
         for opener, name in [(user, token), (admin, token+'_admin'), (barista, token+'_barista')]:
             code, body, headers = request(opener, 'PHP/FuncionesUsuario.php', {'accion':'BuscarUsuario','nombre_usuario':name,'contrase\u00f1a_usuario':password})
             check(code == 303, 'login ' + ('administrador' if opener is admin else 'barista' if opener is barista else 'usuario heredado'))
+        if sql("SHOW TABLES LIKE 'pagos_demo_reserva'") and sql("SHOW TABLES LIKE 'recordatorios_reserva'"):
+            coworking_name = token + '_coworking'
+            sql("INSERT INTO espacios_reserva (Nombre, Silla_Ruedas, Zurdo, Conexiones, Activo) VALUES ('"+coworking_name+"',0,0,'Contacto AC',1)")
+            coworking_space = sql("SELECT ID_Espacio FROM espacios_reserva WHERE Nombre='"+coworking_name+"'")
+            coworking_date = (date.today() + timedelta(days=2)).isoformat()
+            reservation_data = {
+                'espacio': coworking_space, 'fecha': coworking_date, 'hora': '10:00',
+                'paquete': 'medio_dia', 'requisito': ''
+            }
+            code, _, headers = request(user, 'reservas.php', dict(reservation_data, accion='preparar_pago_demo'))
+            check(code == 303 and headers.get('Location', '').endswith('pago_demo=1'),
+                  'checkout simulado conserva la seleccion sin crear la reserva')
+            checkout_code, checkout_body, _ = request(user, 'reservas.php?pago_demo=1')
+            check(checkout_code == 200 and 'Aprobar pago simulado' in checkout_body
+                  and 'Rechazar y volver' in checkout_body
+                  and re.search(r"<input[^>]+name=['\"](?:tarjeta|card)", checkout_body, re.I) is None,
+                  'checkout permite aprobar o rechazar sin pedir tarjeta')
+            code, _, _ = request(user, 'reservas.php', {'accion':'rechazar_pago_demo'})
+            check(code == 303 and sql("SELECT COUNT(*) FROM reservas_espacios WHERE ID_Usuario="+uid+" AND ID_Espacio="+coworking_space) == '0',
+                  'rechazar el pago no crea una reserva')
+            request(user, 'reservas.php', dict(reservation_data, accion='preparar_pago_demo'))
+            code, _, headers = request(user, 'reservas.php', {'accion':'aprobar_pago_demo'})
+            coworking_reservation = sql("SELECT ID_Reserva FROM reservas_espacios WHERE ID_Usuario="+uid+" AND ID_Espacio="+coworking_space+" AND Inicio='"+coworking_date+" 10:00:00'")
+            check(code == 303 and headers.get('Location', '').endswith('reserva=demo_aprobado')
+                  and coworking_reservation != ''
+                  and sql("SELECT Estado FROM reservas_espacios WHERE ID_Reserva="+coworking_reservation) == 'pendiente',
+                  'aprobar crea solicitud de reserva pendiente')
+            success_code, success_body, success_headers = request(user, 'reservas.php')
+            check(success_code == 200 and 'Pago de demostración aprobado, sin cobro real.' in success_body
+                  and success_headers.get('X-PWA-Cache-View') == '1',
+                  'reserva muestra confirmacion y permite guardar la vista offline')
+            check(sql("SELECT CONCAT(Resultado,',',Monto) FROM pagos_demo_reserva WHERE ID_Reserva="+coworking_reservation) == 'aprobado,220.00',
+                  'aprobacion guarda solo un pago de demostracion')
+            check(sql("SELECT COUNT(*) FROM recordatorios_reserva r INNER JOIN reservas_espacios v ON v.ID_Reserva=r.ID_Reserva WHERE r.ID_Reserva="+coworking_reservation+" AND r.Estado='pendiente' AND r.Enviar_En=DATE_SUB(v.Inicio, INTERVAL 1 HOUR)") == '1',
+                  'recordatorio queda programado una hora antes aunque la reserva este pendiente')
+            sql("UPDATE reservas_espacios SET Estado='cancelada' WHERE ID_Reserva="+coworking_reservation)
+            sql("UPDATE recordatorios_reserva SET Enviar_En=DATE_SUB(NOW(), INTERVAL 1 MINUTE) WHERE ID_Reserva="+coworking_reservation)
+            reminder_id = sql("SELECT ID_Recordatorio FROM recordatorios_reserva WHERE ID_Reserva="+coworking_reservation)
+            processor = Path(__file__).resolve().parents[1] / 'PHP' / 'procesar_recordatorios_reserva.php'
+            processor_result = subprocess.run(
+                ['C:/xampp/php/php.exe', str(processor), '--recordatorio='+reminder_id],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            check(processor_result.returncode == 0
+                  and sql("SELECT Estado FROM recordatorios_reserva WHERE ID_Reserva="+coworking_reservation) == 'omitida',
+                  'procesador omite recordatorio de reserva cancelada')
+        else:
+            print('OMITIDO: checkout y recordatorios requieren aplicar BD/migracion_pago_demo_recordatorios.sql')
         for path in ['listProductos.php', 'listCategorias.php', 'listUsuarios.php', 'listPedidos.php', 'listInventario.php']:
-            code, body, _ = request(admin, path)
+            code, body, headers = request(admin, path)
             check(code == 200 and 'admin-page' in body and 'Administración' in body
                   and 'Fatal error' not in body, 'pantalla administrativa ' + path)
-        check(request(user, 'verde.php')[0] == 200, 'pantalla personal verde requiere sesión')
+            if path == 'listInventario.php':
+                check(headers.get('X-PWA-Cache-View') == '1' and 'data-offline-view="true"' in body,
+                      'inventario autoriza guardar una vista offline de solo lectura')
+        green_code, green_body, green_headers = request(user, 'verde.php')
+        check(green_code == 200 and green_headers.get('X-PWA-Cache-View') == '1'
+              and 'data-offline-view="true"' in green_body,
+              'pantalla personal verde requiere sesión y permite guardar la vista offline')
+        personal_code, _, personal_headers = request(user, 'PHP/FidelidadVerde.php?accion=personal')
+        community_code, _, community_headers = request(user, 'PHP/FidelidadVerde.php?accion=comunidad')
+        check(personal_code == 200 and personal_headers.get('X-PWA-Cache-View') == '1'
+              and community_code == 200 and community_headers.get('X-PWA-Cache-View') == '1',
+              'métricas personales y comunitarias se guardan para la vista offline')
         check(request(user, 'verde-barra.php')[0] == 403, 'pantalla de barra restringida al personal')
         check(request(barista, 'verde-barra.php')[0] == 200, 'personal autorizado abre la pantalla de barra')
         check(sql("SELECT contraseña_usuario LIKE '$2%' FROM usuarios WHERE id="+uid) == '1', 'MD5 migrado a hash seguro')
@@ -172,6 +233,17 @@ try:
         for path in ['menu.php','login.php','registro.php','index.php']:
             code, body, _ = request(anonymous,path)
             check(code == 200 and 'Fatal error' not in body and 'Warning:' not in body, 'pantalla ' + path)
+        for language, button_text, category_text, product_text in [
+                ('es','Buscar','Bebidas','Frappe'),
+                ('en','Search','Drinks','Frappe'),
+                ('fr','Rechercher','Boissons','Frappé')]:
+            code, body, _ = request(anonymous,'PHP/TraducirMenu.php', {'language':language}, True)
+            translation = json.loads(body)
+            check(code == 200 and translation['success'] and
+                  translation['translation']['ui']['searchButton'] == button_text and
+                  translation['translation']['categories']['1'] == category_text and
+                  translation['translation']['products']['24']['name'] == product_text,
+                  'traducción estática ' + language)
         code, body, _ = request(anonymous,'PHP/TraducirMenu.php', {'language':'xx'}, True)
         check(code == 422 and json.loads(body)['success'] is False, 'idioma de traducción no admitido rechazado')
         sql("UPDATE usuarios SET Cargo='usuario' WHERE nombre_usuario='"+token+"_admin'")
@@ -179,6 +251,10 @@ try:
         print('Nota: .htaccess requiere comprobacion con Apache activo')
         print('Pruebas terminadas')
     finally:
+        if coworking_space:
+            if coworking_reservation:
+                sql('DELETE FROM reservas_espacios WHERE ID_Reserva='+coworking_reservation)
+            sql('DELETE FROM espacios_reserva WHERE ID_Espacio='+coworking_space)
         if ids:
             joined = ','.join(ids)
             sql('DELETE FROM eco_cupones WHERE ID_Usuario IN ('+joined+'); DELETE FROM eco_eventos WHERE ID_Usuario IN ('+joined+'); DELETE FROM eco_qr_tokens WHERE ID_Usuario IN ('+joined+')')

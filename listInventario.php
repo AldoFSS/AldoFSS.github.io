@@ -32,6 +32,9 @@ $q = $connection->query(
 );
 while ($row = $q->fetch_assoc()) $ventas[(int) $row['ID_Productos']] = (float) $row['Unidades'];
 $connection->close();
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && empty($_GET)) {
+    header('X-PWA-Cache-View: 1');
+}
 
 $demanda = [];
 foreach ($recetas as $receta) {
@@ -60,13 +63,15 @@ function h($value)
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#FF4500">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#FFFFFF">
     <title>Inventario y producción · Caféliz</title>
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="apple-touch-icon" href="IMG/pwa-icon.svg">
+    <link rel="apple-touch-icon" href="IMG/cafeliz-pwa-192-v2.png">
     <link rel="stylesheet" href="CSS/inventario.css">
 </head>
-<body class="admin-page inventario-page">
+<body class="admin-page inventario-page" data-offline-view="true">
     <?php include 'includes/navbar.php'; ?>
     <main class="inventario-main">
         <header class="inventario-heading">

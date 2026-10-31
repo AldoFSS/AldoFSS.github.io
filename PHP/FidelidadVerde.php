@@ -20,6 +20,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && ($_GET['accion'] ?? '') === 
             FROM eco_eventos'
         )->fetch_assoc();
         $connection->close();
+        header('X-PWA-Cache-View: 1');
         echo json_encode([
             'success' => true,
             'vasos' => (int) $resultado['vasos'],
@@ -58,6 +59,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && ($_GET['accion'] ?? '') === 
         }
         $connection->close();
         $vasos = (int) $impacto['vasos'];
+        header('X-PWA-Cache-View: 1');
         echo json_encode([
             'success' => true,
             'vasos' => $vasos,
@@ -186,6 +188,14 @@ try {
         }
         $connection->commit();
         $transaccion = false;
+        if ($cuponCreado !== null) {
+            require_once __DIR__ . '/notificaciones_push.php';
+            enviarPushAUsuario($connection, $usuario, [
+                'title' => '¡Recompensa verde disponible!',
+                'body' => 'Acumulaste ocho vasos reutilizables. Revisa tu cupón de bebida gratis.',
+                'url' => './verde.php'
+            ]);
+        }
         respuestaVerde(200, [
             'success' => true,
             'vasos' => $total,

@@ -5,19 +5,24 @@ if (empty($_SESSION['ID_Usuario'])) {
     header('Location: login.php', true, 303);
     exit;
 }
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && empty($_GET)) {
+    header('X-PWA-Cache-View: 1');
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#FF4500">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#FFFFFF">
     <title>Huella verde · Caféliz</title>
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="apple-touch-icon" href="IMG/pwa-icon.svg">
+    <link rel="apple-touch-icon" href="IMG/cafeliz-pwa-192-v2.png">
     <link rel="stylesheet" href="CSS/verde.css">
 </head>
-<body class="verde-page">
+<body class="verde-page" data-offline-view="true">
     <?php include __DIR__ . '/includes/navbar.php'; ?>
     <main class="verde-main">
         <header class="verde-hero">

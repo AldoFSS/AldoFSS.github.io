@@ -90,6 +90,10 @@
     });
 
     startButton.addEventListener('click', async () => {
+        if (!window.isSecureContext) {
+            cameraStatus.textContent = 'Para usar la cámara, abre CaféLiz mediante HTTPS. También puedes introducir el código manualmente.';
+            return;
+        }
         if (!('BarcodeDetector' in window) || !navigator.mediaDevices?.getUserMedia) {
             cameraStatus.textContent = 'Este navegador no permite escanear con cámara; utiliza el lector o el campo manual.';
             return;

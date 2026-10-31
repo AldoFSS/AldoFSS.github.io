@@ -6,6 +6,7 @@ exigirAdministrador();
 require __DIR__ . '/../BD/conexion.php';
 
 $enTransaccion = false;
+$notificarInventarioBajo = false;
 try {
     $accion = $_POST['accion'] ?? '';
     $connection->begin_transaction();
@@ -65,14 +66,17 @@ try {
         if (!is_string($nota) || mb_strlen(trim($nota)) > 255) {
             throw new InvalidArgumentException('La nota no puede superar 255 caracteres.');
         }
-        $q = $connection->prepare('SELECT Stock FROM inventario_insumos WHERE ID_Insumo=? FOR UPDATE');
+        $q = $connection->prepare('SELECT Stock, Stock_Minimo FROM inventario_insumos WHERE ID_Insumo=? FOR UPDATE');
         $q->bind_param('i', $idInsumo);
         $q->execute();
         $fila = $q->get_result()->fetch_assoc();
         if (!$fila) throw new InvalidArgumentException('El insumo seleccionado ya no existe.');
         $antesMills = (int) round((float) $fila['Stock'] * 1000);
+        $minimoMills = (int) round((float) $fila['Stock_Minimo'] * 1000);
         $cantidadMills = (int) round((float) $cantidad * 1000);
         $nuevoMills = $tipo === 'entrada' ? $antesMills + $cantidadMills : $antesMills - $cantidadMills;
+        $notificarInventarioBajo = $tipo === 'merma' &&
+            $antesMills > $minimoMills && $nuevoMills <= $minimoMills;
         $stockNuevo = number_format($nuevoMills / 1000, 3, '.', '');
         $stockAnterior = number_format($antesMills / 1000, 3, '.', '');
         $actualizar = $connection->prepare('UPDATE inventario_insumos SET Stock=? WHERE ID_Insumo=?');
@@ -118,6 +122,14 @@ try {
 
     $connection->commit();
     $enTransaccion = false;
+    if ($notificarInventarioBajo) {
+        require_once __DIR__ . '/notificaciones_push.php';
+        enviarPushAAdministradores($connection, [
+            'title' => 'Revisar nivel de inventario',
+            'body' => 'Un insumo alcanzó su nivel mínimo. Abre el panel para revisarlo.',
+            'url' => './listInventario.php'
+        ]);
+    }
     header('Location: ../listInventario.php?resultado=ok', true, 303);
     exit;
 } catch (Throwable $e) {

@@ -1,15 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const languages = {
-        es: 'Español', en: 'English', fr: 'Français', de: 'Deutsch', it: 'Italiano',
-        pt: 'Português', ja: '日本語', zh: '简体中文', ko: '한국어', nl: 'Nederlands',
-        ru: 'Русский', ar: 'العربية', hi: 'हिन्दी', tr: 'Türkçe', pl: 'Polski',
-        sv: 'Svenska', da: 'Dansk', no: 'Norsk bokmål', fi: 'Suomi', el: 'Ελληνικά',
-        he: 'עברית', th: 'ไทย', vi: 'Tiếng Việt', id: 'Bahasa Indonesia', ms: 'Bahasa Melayu',
-        uk: 'Українська', cs: 'Čeština', hu: 'Magyar', ro: 'Română', bg: 'Български',
-        hr: 'Hrvatski', sk: 'Slovenčina', sr: 'Српски', ca: 'Català', is: 'Íslenska',
-        sw: 'Kiswahili', fa: 'فارسی', bn: 'বাংলা', tl: 'Filipino', et: 'Eesti', lv: 'Latviešu',
-        lt: 'Lietuvių'
-    };
+    const languages = {es: 'Español', en: 'English', fr: 'Français'};
     const picker = document.getElementById('menu-language');
     const status = document.getElementById('menu-translation-status');
     if (!picker) return;
@@ -128,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const applyTranslation = translation => {
         const ui = translation.ui || {};
         document.documentElement.lang = currentLanguage;
+        document.documentElement.dir = ['ar', 'he', 'fa'].includes(currentLanguage) ? 'rtl' : 'ltr';
         if (typeof ui.documentTitle === 'string') document.title = ui.documentTitle;
         document.querySelectorAll('[data-i18n]').forEach(element => {
             const value = ui[element.dataset.i18n];
@@ -196,15 +187,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const requestNumber = ++requestSequence;
         currentLanguage = language;
         picker.value = language;
-        status.textContent = language === 'es' ? '' : 'Traduciendo el menú…';
+        status.textContent = language === 'es' ? '' : 'Cargando traducción…';
         try {
             localStorage.setItem('cafeliz-language', language);
         } catch (error) {
             status.textContent = 'No se pudo guardar tu preferencia de idioma.';
         }
-        if (language === 'es') {
-            applyTranslation(spanishTranslation());
-            return;
+        let cachedTranslation = null;
+        try {
+            const cacheKey = `cafeliz-translation:v2:${language}`;
+            const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+            if (cached && typeof cached.savedAt === 'number' &&
+                Date.now() - cached.savedAt < 30 * 24 * 60 * 60 * 1000 &&
+                cached.translation?.ui && typeof cached.translation.ui === 'object') {
+                cachedTranslation = cached.translation;
+                applyTranslation(cachedTranslation);
+                status.textContent = 'Traducción guardada; comprobando si hay una versión más reciente…';
+            }
+        } catch (error) {
+            status.textContent = 'No se pudo leer la traducción guardada en este dispositivo.';
         }
 
         try {
@@ -220,13 +221,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(result.message || 'Translation request failed.');
             }
             applyTranslation(result.translation);
+            try {
+                localStorage.setItem(`cafeliz-translation:v2:${language}`, JSON.stringify({
+                    savedAt: Date.now(),
+                    translation: result.translation
+                }));
+            } catch (error) {
+                status.textContent = 'Traducción lista, pero no se pudo guardar para usarla sin conexión.';
+            }
+            if (requestNumber !== requestSequence) return;
             status.textContent = '';
         } catch (error) {
             if (requestNumber !== requestSequence) return;
-            currentLanguage = 'es';
-            picker.value = 'es';
-            status.textContent = 'No se pudo traducir el menú. Se muestra el contenido original en español.';
-            applyTranslation(spanishTranslation());
+            if (cachedTranslation) {
+                applyTranslation(cachedTranslation);
+                status.textContent = 'Sin conexión con el servicio. Se muestra la última traducción guardada.';
+            } else {
+                currentLanguage = 'es';
+                picker.value = 'es';
+                status.textContent = 'No se pudo traducir el menú. Se muestra el contenido original en español.';
+                applyTranslation(spanishTranslation());
+            }
         }
     };
 

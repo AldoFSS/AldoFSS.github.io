@@ -19,11 +19,20 @@
 
 .Barra .navbar > .container {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: space-between;
     align-items: center;
     gap: 8px 14px;
     max-width: 1440px;
+}
+
+.Barra .navbar-menu-row {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    min-width: 0;
 }
 
 .Barra .navbar-brand {
@@ -42,24 +51,29 @@
 }
 
 .Barra .navbar-collapse {
-    flex-grow: 0;
+    flex: 1 1 auto;
+    min-width: 0;
     margin: 0;
+    justify-content: flex-end;
 }
 
 .Barra .navbar-nav {
     gap: 2px;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
 }
 
-.Barra .navbar-expand-xxl .navbar-collapse li {
+.Barra .navbar-expand-xl .navbar-collapse li {
     margin: 0;
     font-size: .92rem;
 }
 
 .Barra .navbar .nav-link {
-    padding: 9px 11px;
+    padding: 8px 8px;
     border-radius: 9px;
     color: var(--cafe-ink);
     font-weight: 600;
+    font-size: .88rem;
     white-space: nowrap;
 }
 
@@ -124,6 +138,7 @@
     flex: 0 0 auto;
     min-height: 0;
     gap: 7px;
+    justify-content: flex-end;
 }
 
 .Barra .pwa-status {
@@ -375,12 +390,32 @@
     outline-offset: 3px;
 }
 
-@media (max-width: 1399.98px) {
-    .Barra .navbar-collapse {
+@media (max-width: 1199.98px) {
+    .Barra .navbar > .container {
+        flex-wrap: wrap;
+    }
+
+    .Barra .navbar-menu-row.collapse:not(.show) {
+        display: none;
+    }
+
+    .Barra .navbar-menu-row {
+        align-items: stretch;
+        flex-direction: column;
         flex-basis: 100%;
-        margin-top: 8px;
+        gap: 4px;
         padding: 10px 0 4px;
         border-top: 1px solid var(--cafe-line);
+    }
+
+    .Barra .navbar-menu-row.show {
+        display: flex;
+    }
+
+    .Barra .navbar-collapse {
+        width: 100%;
+        margin-top: 0;
+        justify-content: flex-start;
     }
 
     .Barra .navbar-nav {
@@ -397,7 +432,18 @@
     }
 
     .Barra .pwa-actions {
-        margin-left: auto;
+        width: 100%;
+        justify-content: flex-start;
+        margin: 4px 0 0;
+    }
+
+    .Barra .navbar-toggler {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        padding: 0;
     }
 }
 
@@ -413,8 +459,15 @@
     }
 
     .Barra .pwa-actions {
-        flex-basis: 100%;
-        justify-content: flex-end;
+        flex-basis: auto;
+    }
+
+    .Barra #open_cart {
+        padding: 8px 9px;
+    }
+
+    .Barra #open_cart .cart_price {
+        display: none;
     }
 
     .admin-main {

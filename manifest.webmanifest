@@ -1,23 +1,35 @@
 {
   "id": "./",
-  "name": "Cafeliz - Cafetería",
-  "short_name": "Cafeliz",
-  "description": "Explora el menú de Cafeliz y disfruta de café, bebidas, desayunos y postres.",
+  "name": "CaféLiz - Cafetería",
+  "short_name": "CaféLiz",
+  "description": "CaféLiz: menú multilingüe, reservas accesibles, fidelización verde e inventario para cafeterías.",
   "lang": "es-MX",
   "start_url": "./index.php",
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait-primary",
-  "background_color": "#fffaf4",
-  "theme_color": "#5b321e",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
   "categories": ["food", "lifestyle"],
   "icons": [
     {
-      "src": "IMG/pwa-icon.svg",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "IMG/cafeliz-pwa-192-v2.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "IMG/cafeliz-pwa-512-v2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "IMG/cafeliz-pwa-maskable-512-v2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [
@@ -25,7 +37,25 @@
       "name": "Ver menú",
       "short_name": "Menú",
       "url": "./menu.php",
-      "icons": [{ "src": "IMG/pwa-icon.svg", "sizes": "192x192 512x512", "type": "image/svg+xml" }]
+      "icons": [{ "src": "IMG/cafeliz-pwa-192-v2.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Reservar espacio",
+      "short_name": "Reservas",
+      "url": "./reservas.php",
+      "icons": [{ "src": "IMG/cafeliz-pwa-192-v2.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Huella verde",
+      "short_name": "Huella verde",
+      "url": "./verde.php",
+      "icons": [{ "src": "IMG/cafeliz-pwa-192-v2.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Inventario",
+      "short_name": "Inventario",
+      "url": "./listInventario.php",
+      "icons": [{ "src": "IMG/cafeliz-pwa-192-v2.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

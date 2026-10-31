@@ -3,25 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#5b321e">
+  <meta name="theme-color" content="#FFFFFF">
   <title>Sin conexión | Cafeliz</title>
-  <link rel="icon" href="IMG/pwa-icon.svg" type="image/svg+xml">
+  <link rel="icon" href="IMG/cafeliz-pwa-192-v2.png" type="image/png">
   <link rel="stylesheet" href="CSS/pwa.css">
   <style>
+    :root {
+      color-scheme: light;
+      font-family: system-ui, sans-serif;
+      color: #232a34;
+      background: #f4f6f8;
+    }
+
     body {
       display: grid;
       min-height: 100vh;
       place-items: center;
       margin: 0;
       padding: 1.5rem;
-      color: #38251c;
-      background: #fffaf4;
-      font-family: system-ui, sans-serif;
       text-align: center;
     }
 
     main {
       max-width: 32rem;
+      padding: 2rem;
+      border: 1px solid #e1e5ea;
+      border-radius: 1.25rem;
+      background: #fff;
+      box-shadow: 0 12px 35px rgb(35 42 52 / 8%);
     }
 
     img {
@@ -29,23 +38,134 @@
       height: 6rem;
     }
 
-    a {
+    .offline-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: .75rem;
+      margin-top: 1.25rem;
+    }
+
+    a,
+    button {
       display: inline-block;
-      margin-top: 1rem;
+      border: 1px solid #FF4500;
       border-radius: 999px;
       padding: 0.75rem 1.25rem;
       color: white;
-      background: #5b321e;
+      background: #FF4500;
+      font: inherit;
+      font-weight: 650;
       text-decoration: none;
+      cursor: pointer;
+    }
+
+    .secondary {
+      color: #232a34;
+      background: #fff;
+    }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 3px solid rgb(255 69 0 / 35%);
+      outline-offset: 3px;
+    }
+
+    .offline-module {
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid #e1e5ea;
+      text-align: left;
+    }
+
+    .offline-module[hidden],
+    [hidden] {
+      display: none !important;
+    }
+
+    .offline-module label {
+      display: grid;
+      gap: .35rem;
+      margin: .75rem 0;
+      font-weight: 600;
+    }
+
+    .offline-module input,
+    .offline-module select,
+    .offline-module textarea {
+      width: 100%;
+      min-height: 2.75rem;
+      padding: .6rem;
+      border: 1px solid #c8cdd3;
+      border-radius: .5rem;
+      color: #232a34;
+      font: inherit;
+    }
+
+    .offline-module textarea {
+      min-height: 6rem;
+    }
+
+    .offline-module button {
+      margin: .35rem .35rem .35rem 0;
+    }
+
+    .offline-module output {
+      display: block;
+      min-height: 1.5rem;
+      margin-top: .75rem;
+      color: #232a34;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: .75rem; }
+      main { padding: 1.25rem; }
+      .offline-actions { flex-direction: column; }
+      .offline-actions a,
+      .offline-actions button { width: 100%; }
     }
   </style>
 </head>
 <body>
   <main>
-    <img src="IMG/pwa-icon.svg" alt="">
+    <img src="IMG/cafeliz-pwa-192-v2.png" alt="">
     <h1>No hay conexión a internet</h1>
-    <p>El menú y las compras necesitan conexión. Cuando vuelvas a estar en línea, podrás continuar usando Cafeliz.</p>
-    <a href="index.php">Intentar de nuevo</a>
+    <p id="offline-message">Mientras estás sin conexión, puedes volver a una copia guardada del inicio o del menú si ya los habías abierto con internet en este dispositivo. El contenido puede no incluir los cambios más recientes.</p>
+    <div class="offline-actions">
+      <a href="menu.php">Ver menú guardado</a>
+      <a class="secondary" href="index.php">Ver inicio guardado</a>
+      <button type="button" onclick="window.location.reload()">Reintentar conexión</button>
+    </div>
+    <section class="offline-module" id="offline-reservas" hidden aria-labelledby="offline-reservas-title">
+      <h2 id="offline-reservas-title">Borrador de reserva</h2>
+      <p>Guarda tus preferencias en este dispositivo. La disponibilidad se comprobará y la solicitud solo se enviará cuando vuelvas a tener conexión.</p>
+      <form id="reserva-borrador">
+        <label>Fecha<input name="fecha" type="date" required></label>
+        <label>Hora de inicio<input name="hora" type="time" min="08:00" max="17:00" step="3600" value="09:00" required></label>
+        <label>Pase<select name="paquete"><option value="medio_dia">Coworking medio día (3 horas)</option><option value="dia_completo">Coworking día completo (6 horas)</option></select></label>
+        <label>Accesibilidad<select name="requisito"><option value="">Todas las mesas</option><option value="silla_ruedas">Espacio para silla de ruedas</option><option value="zurdo">Estación para persona zurda</option></select></label>
+        <button type="submit">Guardar borrador en este dispositivo</button>
+        <button type="button" class="secondary" id="borrar-reserva-borrador">Borrar borrador</button>
+      </form>
+      <output id="estado-reserva-borrador" role="status" aria-live="polite"></output>
+      <a id="continuar-reserva" href="reservas.php" hidden>Revisar disponibilidad al reconectar</a>
+    </section>
+    <section class="offline-module" id="offline-verde" hidden aria-labelledby="offline-verde-title">
+      <h2 id="offline-verde-title">Huella verde</h2>
+      <p>Los impactos, cupones y códigos QR necesitan conexión para validarse. No se registrará ningún vaso ni cupón sin confirmación del servidor.</p>
+      <p>Al volver a conectarte podrás abrir la billetera y generar un código temporal nuevo.</p>
+    </section>
+    <section class="offline-module" id="offline-inventario" hidden aria-labelledby="offline-inventario-title">
+      <h2 id="offline-inventario-title">Nota local de inventario</h2>
+      <p>El stock y las recetas no se guardan en la caché. Puedes dejar una nota local en este dispositivo y transcribirla al panel al reconectar; no modifica existencias. Evita anotar datos sensibles: el almacenamiento del navegador no está cifrado.</p>
+      <label for="nota-inventario">Nota para revisar después</label>
+      <textarea id="nota-inventario" maxlength="1000" placeholder="Ej. Revisar existencia de leche de avena"></textarea>
+      <button type="button" id="guardar-nota-inventario">Guardar nota local</button>
+      <button type="button" class="secondary" id="borrar-nota-inventario">Borrar nota</button>
+      <output id="estado-nota-inventario" role="status" aria-live="polite"></output>
+    </section>
+    <p>Los pedidos, reservas, cupones y cambios de inventario requieren conexión para validarse en el servidor.</p>
   </main>
+  <script src="JS/offline-experience.js" defer></script>
 </body>
 </html>

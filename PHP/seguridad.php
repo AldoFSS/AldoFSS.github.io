@@ -1,9 +1,37 @@
 <?php
+function solicitudEsHttps()
+{
+    $httpsDirecto = !empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off';
+    $proxyConfiable = getenv('TRUST_PROXY_HTTPS') === '1' &&
+        strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https';
+    return $httpsDirecto || $proxyConfiable;
+}
+
 function iniciarSesionSegura()
 {
+    if (getenv('APP_ENV') === 'production' && !solicitudEsHttps()) {
+        $host = $_SERVER['HTTP_HOST'] ?? '';
+        $partesHost = parse_url('http://' . $host);
+        $nombreServidor = strtolower(rtrim((string) ($_SERVER['SERVER_NAME'] ?? ''), '.'));
+        $nombreSolicitado = strtolower(rtrim((string) ($partesHost['host'] ?? ''), '.'));
+        if ($nombreServidor === '' || $nombreSolicitado !== $nombreServidor ||
+            isset($partesHost['user']) || isset($partesHost['pass']) || isset($partesHost['path'])) {
+            http_response_code(400);
+            exit('Host de solicitud no válido.');
+        }
+        $ruta = $_SERVER['REQUEST_URI'] ?? '/';
+        if (!is_string($ruta) || $ruta === '' || $ruta[0] !== '/' || strpos($ruta, "\r") !== false || strpos($ruta, "\n") !== false) {
+            $ruta = '/';
+        }
+        $puerto = isset($partesHost['port']) && $partesHost['port'] !== 80
+            ? ':' . $partesHost['port'] : '';
+        header('Location: https://' . $nombreSolicitado . $puerto . $ruta, true, 308);
+        exit;
+    }
+
     if (session_status() !== PHP_SESSION_ACTIVE) {
         session_start(['cookie_httponly' => true, 'cookie_samesite' => 'Lax',
-            'cookie_secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off']);
+            'cookie_secure' => solicitudEsHttps()]);
     }
 }
 function exigirPostLocal()
@@ -15,7 +43,7 @@ function exigirPostLocal()
     }
     $origen = $_SERVER['HTTP_ORIGIN'] ?? ($_SERVER['HTTP_REFERER'] ?? '');
     $partes = parse_url($origen);
-    $esquema = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http';
+    $esquema = solicitudEsHttps() ? 'https' : 'http';
     $esperado = parse_url($esquema . '://' . ($_SERVER['HTTP_HOST'] ?? ''));
     if (!$partes || !isset($partes['host']) ||
         strtolower($partes['host']) !== strtolower($esperado['host'] ?? '') ||

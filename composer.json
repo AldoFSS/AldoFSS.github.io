@@ -1,0 +1,7 @@
+{
+    "require": {
+        "google/apiclient": "^2.20",
+        "google/cloud-translate": "^2.3",
+        "minishlink/web-push": "^9.0"
+    }
+}

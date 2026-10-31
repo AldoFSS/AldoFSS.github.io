@@ -87,7 +87,7 @@ try {
         $q->execute();
     }
     require_once __DIR__ . '/Inventario.php';
-    descontarInsumosDePedido($connection, $cantidades, $orden);
+    $insumosBajos = descontarInsumosDePedido($connection, $cantidades, $orden);
     $q = $connection->prepare('SELECT Fecha_Compra FROM ordenes WHERE ID_Ordenes=?');
     $q->bind_param('i', $orden);
     $q->execute();
@@ -100,6 +100,14 @@ try {
     $q->execute();
     $connection->commit();
     $transaccion = false;
+    if ($insumosBajos) {
+        require_once __DIR__ . '/notificaciones_push.php';
+        enviarPushAAdministradores($connection, [
+            'title' => 'Revisar nivel de inventario',
+            'body' => 'Un insumo alcanzó su nivel mínimo. Abre el panel para revisarlo.',
+            'url' => './listInventario.php'
+        ]);
+    }
     echo $respuesta;
 } catch (Throwable $e) {
     if ($transaccion) $connection->rollback();

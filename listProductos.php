@@ -8,9 +8,11 @@ header('Cache-Control: no-store');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#FF4500">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#FFFFFF">
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="apple-touch-icon" href="IMG/pwa-icon.svg">
+    <link rel="apple-touch-icon" href="IMG/cafeliz-pwa-192-v2.png">
     <link rel="stylesheet" href="CSS/home.css">
     <title>Productos · Administración CaféLiz</title>
 </head>
