@@ -36,7 +36,27 @@ try {
         $cantidades[$id] = $cantidad;
     }
     ksort($cantidades);
-    $huella = hash('sha256', json_encode($cantidades));
+    $codigoCupon = $data['couponCode'] ?? '';
+    $idProductoCupon = $data['couponProductId'] ?? null;
+    if ($codigoCupon !== '' &&
+        (!is_string($codigoCupon) || !preg_match('/^[A-Fa-f0-9]{32}$/D', $codigoCupon))) {
+        throw new InvalidArgumentException('El código del cupón no es válido.');
+    }
+    if (($codigoCupon === '') !== ($idProductoCupon === null)) {
+        throw new InvalidArgumentException('Selecciona el cupón y la bebida que deseas liberar.');
+    }
+    if ($codigoCupon !== '') {
+        $idProductoCupon = enteroPositivo($idProductoCupon);
+    }
+    $huellaPedido = $cantidades;
+    if ($codigoCupon !== '') {
+        $huellaPedido = [
+            'cart' => $cantidades,
+            'couponCode' => strtoupper($codigoCupon),
+            'couponProductId' => $idProductoCupon
+        ];
+    }
+    $huella = hash('sha256', json_encode($huellaPedido, JSON_THROW_ON_ERROR));
     require __DIR__ . '/../BD/conexion.php';
     $usuario = (int) $_SESSION['ID_Usuario'];
     $connection->begin_transaction();
@@ -58,10 +78,14 @@ try {
         echo $solicitud['respuesta'];
         exit;
     }
-    $productos = [];
     $precios = [];
     $centavos = 0;
-    $q = $connection->prepare('SELECT Product_Nombre, Costo FROM menuproductos WHERE id=? LOCK IN SHARE MODE');
+    $categorias = [];
+    $q = $connection->prepare(
+        'SELECT p.Costo, c.Categoria
+        FROM menuproductos p LEFT JOIN menucategoria c ON c.ID_Cat=p.id_categoria
+        WHERE p.id=? FOR UPDATE'
+    );
     foreach ($cantidades as $id => $cantidad) {
         $q->bind_param('i', $id);
         $q->execute();
@@ -70,12 +94,37 @@ try {
             throw new InvalidArgumentException('Un producto no está disponible o tiene un precio no válido.');
         }
         $precios[$id] = $producto['Costo'];
+        $categorias[$id] = $producto['Categoria'];
         $precio = (int) $partes[1] * 100 + (int) $partes[2];
         $centavos += $precio * $cantidad;
         if ($centavos > 9999999999) throw new InvalidArgumentException('Total fuera de rango.');
-        $productos[] = ['Nombre_Producto' => $producto['Product_Nombre'], 'Cantidad' => $cantidad];
     }
-    $total = number_format($centavos / 100, 2, '.', '');
+    $descuentoCentavos = 0;
+    $cuponId = null;
+    if ($codigoCupon !== '') {
+        if (!array_key_exists($idProductoCupon, $cantidades) ||
+            strcasecmp(trim((string) ($categorias[$idProductoCupon] ?? '')), 'Bebidas') !== 0) {
+            throw new InvalidArgumentException('Agrega una bebida al carrito para usar este cupón.');
+        }
+        $codigoCupon = strtoupper($codigoCupon);
+        $q = $connection->prepare(
+            'SELECT ID_Cupon, Canjeado, Expira FROM eco_cupones
+            WHERE Codigo=? AND ID_Usuario=? FOR UPDATE'
+        );
+        $q->bind_param('si', $codigoCupon, $usuario);
+        $q->execute();
+        $cupon = $q->get_result()->fetch_assoc();
+        if (!$cupon) throw new DomainException('El cupón no pertenece a esta cuenta.');
+        if ($cupon['Canjeado'] !== null) throw new DomainException('Este cupón ya fue utilizado.');
+        if (strtotime($cupon['Expira']) <= time()) throw new DomainException('Este cupón ya venció.');
+        $cuponId = (int) $cupon['ID_Cupon'];
+        preg_match('/^([0-9]+)\\.([0-9]{2})$/D', $precios[$idProductoCupon], $precioCupon);
+        $descuentoCentavos = (int) $precioCupon[1] * 100 + (int) $precioCupon[2];
+    }
+    $totalCentavos = $centavos - $descuentoCentavos;
+    $subtotal = number_format($centavos / 100, 2, '.', '');
+    $descuento = number_format($descuentoCentavos / 100, 2, '.', '');
+    $total = number_format($totalCentavos / 100, 2, '.', '');
     $q = $connection->prepare('INSERT INTO ordenes (ID_Usuario, Total, Fecha_Compra) VALUES (?, ?, CURRENT_DATE())');
     $q->bind_param('is', $usuario, $total);
     $q->execute();
@@ -88,32 +137,48 @@ try {
     }
     require_once __DIR__ . '/Inventario.php';
     $insumosBajos = descontarInsumosDePedido($connection, $cantidades, $orden);
-    $q = $connection->prepare('SELECT Fecha_Compra FROM ordenes WHERE ID_Ordenes=?');
-    $q->bind_param('i', $orden);
-    $q->execute();
-    $fecha = $q->get_result()->fetch_assoc()['Fecha_Compra'];
+    if ($cuponId !== null) {
+        $q = $connection->prepare(
+            'UPDATE eco_cupones SET Canjeado=CURRENT_TIMESTAMP
+            WHERE ID_Cupon=? AND ID_Usuario=? AND Canjeado IS NULL AND Expira > CURRENT_TIMESTAMP'
+        );
+        $q->bind_param('ii', $cuponId, $usuario);
+        $q->execute();
+        if ($q->affected_rows !== 1) throw new DomainException('Este cupón ya fue usado o venció.');
+        $descuentoDecimal = number_format($descuentoCentavos / 100, 2, '.', '');
+        $q = $connection->prepare(
+            'INSERT INTO ordenes_cupones (ID_Orden, ID_Cupon, ID_Producto, Descuento) VALUES (?, ?, ?, ?)'
+        );
+        $q->bind_param('iiis', $orden, $cuponId, $idProductoCupon, $descuentoDecimal);
+        $q->execute();
+    }
     $respuesta = json_encode(['success' => true, 'productosInsertados' => true,
-        'data' => ['orderId' => $orden, 'userName' => $_SESSION['nombre_usuario'] ?? '',
-            'total' => $total, 'fecha' => $fecha, 'productos' => $productos]], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        'data' => ['orderId' => $orden, 'subtotal' => $subtotal,
+            'discount' => $descuento, 'total' => $total]],
+        JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
     $q = $connection->prepare('UPDATE solicitudes_compra SET respuesta=? WHERE ID_Usuario=? AND clave=?');
     $q->bind_param('sis', $respuesta, $usuario, $clave);
     $q->execute();
-    $connection->commit();
-    $transaccion = false;
     if ($insumosBajos) {
         require_once __DIR__ . '/notificaciones_push.php';
-        enviarPushAAdministradores($connection, [
+        $notificacionInventario = [
             'title' => 'Revisar nivel de inventario',
             'body' => 'Un insumo alcanzó su nivel mínimo. Abre el panel para revisarlo.',
             'url' => './listInventario.php'
-        ]);
+        ];
+    }
+    $connection->commit();
+    $transaccion = false;
+    if ($insumosBajos) {
+        enviarPushAAdministradores($connection, $notificacionInventario);
     }
     echo $respuesta;
 } catch (Throwable $e) {
     if ($transaccion) $connection->rollback();
     $validacion = $e instanceof InvalidArgumentException || $e instanceof JsonException;
-    http_response_code($validacion ? 422 : 500);
-    if (!$validacion) error_log((string) $e);
-    echo json_encode(['success' => false, 'message' => $validacion ? $e->getMessage()
+    $conflicto = $e instanceof DomainException;
+    http_response_code($validacion ? 422 : ($conflicto ? 409 : 500));
+    if (!$validacion && !$conflicto) error_log((string) $e);
+    echo json_encode(['success' => false, 'message' => ($validacion || $conflicto) ? $e->getMessage()
         : 'No se pudo confirmar el pedido. Reintenta sin cambiar el carrito.']);
 }

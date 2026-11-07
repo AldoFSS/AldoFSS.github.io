@@ -1,3 +1,4 @@
+
 {
   "id": "./",
   "name": "CaféLiz - Cafetería",
@@ -37,25 +38,49 @@
       "name": "Ver menú",
       "short_name": "Menú",
       "url": "./menu.php",
-      "icons": [{ "src": "IMG/cafeliz-pwa-192-v2.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "IMG/cafeliz-pwa-192-v2.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Reservar espacio",
       "short_name": "Reservas",
       "url": "./reservas.php",
-      "icons": [{ "src": "IMG/cafeliz-pwa-192-v2.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "IMG/cafeliz-pwa-192-v2.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Huella verde",
       "short_name": "Huella verde",
       "url": "./verde.php",
-      "icons": [{ "src": "IMG/cafeliz-pwa-192-v2.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "IMG/cafeliz-pwa-192-v2.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Inventario",
       "short_name": "Inventario",
       "url": "./listInventario.php",
-      "icons": [{ "src": "IMG/cafeliz-pwa-192-v2.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "IMG/cafeliz-pwa-192-v2.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

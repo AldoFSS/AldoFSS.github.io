@@ -2,6 +2,9 @@
 require_once __DIR__ . '/PHP/seguridad.php';
 iniciarSesionSegura();
 header('Cache-Control: ' . (!empty($_SESSION['ID_Usuario']) ? 'no-store' : 'private, no-cache, must-revalidate'));
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && empty($_GET) && empty($_SESSION['ID_Usuario'])) {
+    header('X-PWA-Cacheable: public');
+}
 $busqueda = isset($_GET['search']) && is_string($_GET['search']) ? trim($_GET['search']) : '';
 $categoria = filter_var($_GET['categoriaid'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 0;
 $menuUrl = function ($id) use ($busqueda) {
@@ -122,7 +125,6 @@ $menuUrl = function ($id) use ($busqueda) {
         </div>
     </main>
     <?php include("includes/footer.html"); ?>
-    <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="JS/menu-i18n.js?v=2"></script>
+    <script src="JS/menu-i18n.js?v=3"></script>
 </body>
 </html>

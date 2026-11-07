@@ -1,4 +1,11 @@
-<?php require_once __DIR__ . '/PHP/seguridad.php'; iniciarSesionSegura(); header('Cache-Control: ' . (!empty($_SESSION['ID_Usuario']) ? 'no-store' : 'private, no-cache, must-revalidate')); ?>
+<?php
+require_once __DIR__ . '/PHP/seguridad.php';
+iniciarSesionSegura();
+header('Cache-Control: ' . (!empty($_SESSION['ID_Usuario']) ? 'no-store' : 'private, no-cache, must-revalidate'));
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && empty($_GET) && empty($_SESSION['ID_Usuario'])) {
+    header('X-PWA-Cacheable: public');
+}
+?>
 <!DOCTYPE html>
 <html lang="es-MX">
 <head>
@@ -163,7 +170,6 @@
   </div>
 
   <?php include("includes/footer.html");?>
-  <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="node_modules/lightbox2/dist/js/lightbox.min.js"></script>
 
 

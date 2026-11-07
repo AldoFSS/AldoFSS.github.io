@@ -1,15 +1,19 @@
 <?php
-if (PHP_SAPI !== 'cli') {
-    http_response_code(404);
-    exit;
+$esCli = PHP_SAPI === 'cli';
+if (!$esCli) {
+    require_once __DIR__ . '/autenticacion_tareas.php';
+    exigirTareaProgramada('procesar_recordatorios_reserva.php');
+    ob_start();
 }
 
 $recordatorioEspecifico = null;
-if ($argc > 2 || ($argc === 2 && !preg_match('/\A--recordatorio=([1-9][0-9]*)\z/', $argv[1], $argumento))) {
+$argumentos = $esCli ? $argv : [];
+if (count($argumentos) > 2 ||
+    (count($argumentos) === 2 && !preg_match('/\A--recordatorio=([1-9][0-9]*)\z/', $argumentos[1], $argumento))) {
     fwrite(STDERR, "Uso: php procesar_recordatorios_reserva.php [--recordatorio=ID]\n");
     exit(2);
 }
-if ($argc === 2) {
+if (count($argumentos) === 2) {
     $recordatorioEspecifico = filter_var($argumento[1], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
     if ($recordatorioEspecifico === false) {
         fwrite(STDERR, "El identificador del recordatorio no es válido.\n");
@@ -21,14 +25,17 @@ $filtroRecordatorio = $recordatorioEspecifico === null
     : ' AND r.ID_Recordatorio=' . (int) $recordatorioEspecifico;
 
 require_once __DIR__ . '/../BD/conexion.php';
+require_once __DIR__ . '/zona_horaria_app.php';
 require_once __DIR__ . '/notificaciones_push.php';
 
 $maxIntentos = 5;
 $procesados = 0;
+$limiteProcesamiento = $esCli ? 50 : 2;
 $enTransaccion = false;
 
 try {
-    while ($procesados < 50) {
+    configurarZonaHorariaAplicacion($connection);
+    while ($procesados < $limiteProcesamiento) {
         $connection->begin_transaction();
         $enTransaccion = true;
         $resultado = $connection->query(
@@ -81,7 +88,10 @@ try {
         $enviado = enviarPushAUsuario($connection, $usuarioId, [
             'title' => 'Tu espacio de CaféLiz te espera',
             'body' => 'Tu reserva de coworking comienza en una hora.',
-            'url' => './reservas.php'
+            'url' => './reservas.php',
+            'event_key' => 'recordatorio-reserva:' . $idRecordatorio,
+            'attempt' => (int) $recordatorio['Intentos'] + 1,
+            '_queue' => false
         ]);
         if ($enviado) {
             $actualizar = $connection->prepare(
@@ -106,6 +116,10 @@ try {
     }
 
     $connection->close();
+    if (!$esCli) {
+        ob_end_clean();
+        echo "Recordatorios procesados.\n";
+    }
 } catch (Throwable $error) {
     if ($enTransaccion) {
         try {
@@ -116,6 +130,12 @@ try {
         }
     }
     error_log('Falló el procesador de recordatorios de reserva: ' . (string) $error);
-    fwrite(STDERR, "No se pudieron procesar los recordatorios.\n");
+    if ($esCli) {
+        fwrite(STDERR, "No se pudieron procesar los recordatorios.\n");
+    } else {
+        ob_end_clean();
+        http_response_code(500);
+        echo "No se pudieron procesar los recordatorios.\n";
+    }
     exit(1);
 }

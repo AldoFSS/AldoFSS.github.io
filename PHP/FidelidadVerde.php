@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/seguridad.php';
+require_once __DIR__ . '/zona_horaria_app.php';
 iniciarSesionSegura();
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -14,13 +15,13 @@ function respuestaVerde($estado, array $respuesta)
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && ($_GET['accion'] ?? '') === 'comunidad') {
     try {
         require __DIR__ . '/../BD/conexion.php';
+        configurarZonaHorariaAplicacion($connection);
         $resultado = $connection->query(
             'SELECT COUNT(*) AS vasos, COALESCE(SUM(CO2_g), 0) AS co2,
                 COALESCE(SUM(Residuos_g), 0) AS residuos, COALESCE(SUM(Agua_ml), 0) AS agua
             FROM eco_eventos'
         )->fetch_assoc();
         $connection->close();
-        header('X-PWA-Cache-View: 1');
         echo json_encode([
             'success' => true,
             'vasos' => (int) $resultado['vasos'],
@@ -40,6 +41,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && ($_GET['accion'] ?? '') === 
     }
     try {
         require __DIR__ . '/../BD/conexion.php';
+        configurarZonaHorariaAplicacion($connection);
         $usuario = (int) $_SESSION['ID_Usuario'];
         $q = $connection->prepare(
             'SELECT COUNT(*) AS vasos, COALESCE(SUM(CO2_g), 0) AS co2,
@@ -49,17 +51,28 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && ($_GET['accion'] ?? '') === 
         $q->bind_param('i', $usuario);
         $q->execute();
         $impacto = $q->get_result()->fetch_assoc();
-        $q = $connection->prepare('SELECT Codigo, Creado FROM eco_cupones WHERE ID_Usuario=? AND Canjeado IS NULL ORDER BY Creado');
+        $q = $connection->prepare(
+            'SELECT Codigo, Creado, Expira, Canjeado,
+                CASE WHEN Canjeado IS NOT NULL THEN \'canjeado\'
+                    WHEN Expira <= CURRENT_TIMESTAMP THEN \'vencido\'
+                    ELSE \'disponible\' END AS Estado
+            FROM eco_cupones WHERE ID_Usuario=? ORDER BY Creado DESC'
+        );
         $q->bind_param('i', $usuario);
         $q->execute();
         $cupones = [];
         $resultado = $q->get_result();
         while ($cupon = $resultado->fetch_assoc()) {
-            $cupones[] = ['codigo' => 'CAFELIZ-CUPON:' . $cupon['Codigo'], 'creado' => $cupon['Creado']];
+            $cupones[] = [
+                'codigo' => $cupon['Estado'] === 'disponible' ? 'CAFELIZ-CUPON:' . $cupon['Codigo'] : null,
+                'referencia' => substr($cupon['Codigo'], -8),
+                'creado' => $cupon['Creado'],
+                'expira' => $cupon['Expira'],
+                'estado' => $cupon['Estado']
+            ];
         }
         $connection->close();
         $vasos = (int) $impacto['vasos'];
-        header('X-PWA-Cache-View: 1');
         echo json_encode([
             'success' => true,
             'vasos' => $vasos,
@@ -74,6 +87,44 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && ($_GET['accion'] ?? '') === 
     } catch (Throwable $e) {
         error_log((string) $e);
         respuestaVerde(500, ['success' => false, 'message' => 'No se pudo consultar tu billetera verde.']);
+    }
+    exit;
+}
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && ($_GET['accion'] ?? '') === 'checkout') {
+    if (empty($_SESSION['ID_Usuario'])) {
+        respuestaVerde(401, ['success' => false, 'message' => 'Inicia sesión para consultar tus cupones.']);
+    }
+    try {
+        require __DIR__ . '/../BD/conexion.php';
+        configurarZonaHorariaAplicacion($connection);
+        $usuario = (int) $_SESSION['ID_Usuario'];
+        $q = $connection->prepare(
+            'SELECT Codigo, Expira FROM eco_cupones
+            WHERE ID_Usuario=? AND Canjeado IS NULL AND Expira > CURRENT_TIMESTAMP
+            ORDER BY Expira, ID_Cupon'
+        );
+        $q->bind_param('i', $usuario);
+        $q->execute();
+        $cupones = [];
+        $resultado = $q->get_result();
+        while ($cupon = $resultado->fetch_assoc()) {
+            $cupones[] = ['codigo' => $cupon['Codigo'], 'expira' => $cupon['Expira']];
+        }
+        $bebidas = [];
+        $resultado = $connection->query(
+            "SELECT p.id, p.Product_Nombre FROM menuproductos p
+            INNER JOIN menucategoria c ON c.ID_Cat=p.id_categoria
+            WHERE LOWER(TRIM(c.Categoria))='bebidas' ORDER BY p.Product_Nombre, p.id"
+        );
+        while ($bebida = $resultado->fetch_assoc()) {
+            $bebidas[] = ['id' => (int) $bebida['id'], 'nombre' => $bebida['Product_Nombre']];
+        }
+        $connection->close();
+        echo json_encode(['success' => true, 'cupones' => $cupones, 'bebidas' => $bebidas],
+            JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+    } catch (Throwable $e) {
+        error_log((string) $e);
+        respuestaVerde(500, ['success' => false, 'message' => 'No se pudieron consultar tus cupones.']);
     }
     exit;
 }
@@ -100,6 +151,7 @@ try {
     if (!is_array($data)) throw new InvalidArgumentException('El cuerpo JSON debe ser un objeto.');
     $accion = $data['accion'] ?? '';
     require __DIR__ . '/../BD/conexion.php';
+    configurarZonaHorariaAplicacion($connection);
 
     if ($accion === 'emitir_qr') {
         $ahora = time();
@@ -181,7 +233,10 @@ try {
         $cuponCreado = null;
         if ($total % 8 === 0) {
             $cupon = strtoupper(bin2hex(random_bytes(16)));
-            $crearCupon = $connection->prepare('INSERT INTO eco_cupones (ID_Usuario, Codigo) VALUES (?, ?)');
+            $crearCupon = $connection->prepare(
+                'INSERT INTO eco_cupones (ID_Usuario, Codigo, Expira)
+                VALUES (?, ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 14 DAY))'
+            );
             $crearCupon->bind_param('is', $usuario, $cupon);
             $crearCupon->execute();
             $cuponCreado = $cupon;
@@ -214,12 +269,13 @@ try {
         $codigoCupon = strtoupper($partes[1]);
         $connection->begin_transaction();
         $transaccion = true;
-        $q = $connection->prepare('SELECT ID_Cupon, Canjeado FROM eco_cupones WHERE Codigo=? FOR UPDATE');
+        $q = $connection->prepare('SELECT ID_Cupon, Canjeado, Expira FROM eco_cupones WHERE Codigo=? FOR UPDATE');
         $q->bind_param('s', $codigoCupon);
         $q->execute();
         $cupon = $q->get_result()->fetch_assoc();
         if (!$cupon) throw new DomainException('Cupón no reconocido.');
         if ($cupon['Canjeado'] !== null) throw new DomainException('Este cupón ya fue canjeado.');
+        if (strtotime($cupon['Expira']) <= time()) throw new DomainException('Este cupón ya venció.');
         $idCupon = (int) $cupon['ID_Cupon'];
         $q = $connection->prepare('UPDATE eco_cupones SET Canjeado=CURRENT_TIMESTAMP WHERE ID_Cupon=? AND Canjeado IS NULL');
         $q->bind_param('i', $idCupon);

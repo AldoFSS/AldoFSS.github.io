@@ -8,20 +8,29 @@
     };
     const module = moduleByPage[path];
     if (module) {
-        document.querySelectorAll('.offline-module').forEach(section => {
-            section.hidden = section.id !== `offline-${module}`;
-        });
+        const offlinePage = document.body.dataset.offlinePage === 'true';
+        const updateOfflineModule = () => {
+            const showModule = offlinePage || !navigator.onLine || document.body.dataset.pwaCached === 'true';
+            document.querySelectorAll('.offline-module').forEach(section => {
+                section.hidden = section.id !== `offline-${module}` || !showModule;
+            });
+        };
+        updateOfflineModule();
+        window.addEventListener('online', updateOfflineModule);
+        window.addEventListener('offline', updateOfflineModule);
         const messages = {
             reservas: 'No se pudo consultar el servidor. Puedes guardar tus preferencias como borrador local; la disponibilidad no está confirmada.',
             verde: 'La billetera verde necesita conexión. Ningún QR, vaso o cupón se valida en modo offline.',
             inventario: 'El inventario administrativo no está disponible sin conexión; solo puedes conservar una nota local.'
         };
-        document.getElementById('offline-message').textContent = messages[module];
+        const offlineMessage = document.getElementById('offline-message');
+        if (offlineMessage) offlineMessage.textContent = messages[module];
     }
 
     const reservaForm = document.getElementById('reserva-borrador');
     const reservaStatus = document.getElementById('estado-reserva-borrador');
-    const continuarReserva = document.getElementById('continuar-reserva');
+    const continuarReserva = document.getElementById('continuar-reserva-borrador') ||
+        document.getElementById('continuar-reserva');
     const reservaKey = 'cafeliz-reserva-borrador';
 
     if (reservaForm && reservaStatus && continuarReserva) {

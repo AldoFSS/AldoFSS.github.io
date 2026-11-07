@@ -9,11 +9,12 @@
 <link rel="stylesheet" href="node_modules/toastr/build/toastr.min.css"/>
 <link rel="stylesheet" href="Awesome/css/fontawesome.css">
 <link rel="stylesheet" href="Awesome/css/solid.css">
-<link rel="stylesheet" href="CSS/estilos.css">
+<link rel="stylesheet" href="CSS/estilos.css?v=2">
 <link rel="stylesheet" href="CSS/home.css">
 <link rel="stylesheet" href="CSS/pwa.css">
 <link rel="stylesheet" href="CSS/menu-cart.css?v=5">
-<link rel="stylesheet" href="CSS/admin.css?v=5">
+<link rel="stylesheet" href="CSS/admin.css?v=6">
+<link rel="stylesheet" href="CSS/footer.css?v=1">
 
 <!-- Scripts JavaScript -->
 <script src="node_modules/jquery/dist/jquery.min.js"></script>
@@ -28,7 +29,7 @@
   iniciarSesionSegura();
   ?>
   <div class="Barra">
-    <nav class="navbar navbar-expand-xl ftco_navbar ftco-navbar-light" id="ftco-navbar" style="z-index: 10;">
+    <nav class="navbar navbar-expand-xxl ftco_navbar ftco-navbar-light" id="ftco-navbar" style="z-index: 10;">
       <div class="container">
       <img src="./IMG/CAFELIZ.png" alt="logo de la Cafeteria" width="50px" height="50px">
         <a class="navbar-brand" href="index.php">CAFELIZ</a>
@@ -76,7 +77,7 @@
         </div>
 
         <div class="collapse navbar-collapse navbar-menu-row" id="navbarNav">
-            <ul class="navbar-nav align-items-xl-center">
+            <ul class="navbar-nav align-items-xxl-center">
               <li class="nav-item"><a href="./index.php" class="nav-link" data-i18n="homeNav">Home</a></li>
               <li class="nav-item"><a href="./menu.php" class="nav-link" data-i18n="menuNav">Menu</a></li>
               <li class="nav-item"><a href="./reservas.php" class="nav-link" data-i18n="reservationsNav">Reservar espacio</a></li>
@@ -125,6 +126,8 @@
   </div>
   
   <?php include("./PHP/compra.php") ?>
+  <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
+  <script src="JS/nabvar.js?v=3" defer></script>
   <script src="JS/pwa.js" defer></script>
 </body>
 </html>

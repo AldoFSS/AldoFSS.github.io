@@ -46,28 +46,27 @@ Las compras nuevas guardan el precio unitario; las antiguas conservan el reporte
 basado en el precio actual, porque el sistema anterior no almacenaba precios históricos.
 La validación de origen requiere conservar Host y el esquema HTTPS al usar un proxy.
 
-Para habilitar las reservas de coworking, aplicar en este orden
+Para habilitar las reservas de coworking, aplicar
 `BD/migracion_reservas_espacios.sql`, `BD/migracion_notificaciones_push.sql` y
-`BD/migracion_pago_demo_recordatorios.sql`. El plano incluye espacios de ejemplo: ajustar
-nombres, conexiones y atributos accesibles al local real. El checkout permite aprobar o rechazar
+`BD/migracion_pago_demo_recordatorios.sql` en ese orden. Si la primera migracion ya se habia
+aplicado, volver a ejecutarla agrega ocho espacios de ejemplo sin duplicarlos. El plano
+incluye espacios de ejemplo: ajustar
+nombres, conexiones y atributos accesibles al local real. El catalogo de ejemplo incluye 14 mesas,
+seis con espacio para silla de ruedas. El plano tambien muestra areas conceptuales de preparacion,
+caja y sanitario accesible; validar su distribucion y adecuaciones antes de presentarlo como un local
+real. El checkout permite aprobar o rechazar
 un pago de demostración; no solicita ni guarda datos de tarjeta y no realiza cargos. Al aprobar,
 la reserva queda pendiente de confirmación y se guarda un registro de demostración junto con
 un recordatorio programado para una hora antes de la hora de inicio. No se emiten credenciales Wi-Fi.
 
-El recordatorio requiere que el proceso PHP se ejecute periódicamente. En Windows, crear una tarea
-en el Programador de tareas que se repita cada minuto, con `C:\xampp\php\php.exe` como programa y
-`C:\xampp\htdocs\PaginaWeb_v3\PaginaWeb\PHP\procesar_recordatorios_reserva.php` como argumento.
-La tarea debe ejecutarse con las mismas variables `DB_*` y `VAPID_*` que usa PHP/Apache. En Linux,
-configurar una entrada equivalente en cron:
-
-```cron
-* * * * * /usr/bin/php /ruta/a/PaginaWeb/PHP/procesar_recordatorios_reserva.php
-```
+El recordatorio requiere que el proceso PHP se ejecute periódicamente. En InfinityFree se configura
+mediante el workflow de GitHub Actions descrito en la sección **Notificaciones push**; cada ejecución
+comprueba cupones y reservas. Para desarrollo local, se puede ejecutar el script con
+`C:\xampp\php\php.exe` y las mismas variables `DB_*` y `VAPID_*` de PHP/Apache.
 
 El proceso examina reservas pendientes y confirmadas; omite las canceladas o cuyo inicio ya pasó.
-Si el envío falla, reintenta cada cinco minutos hasta completar cinco intentos en total. Los avisos requieren una
-suscripción Push válida y configuración VAPID; ejecutar la tarea no garantiza que el sistema
-operativo o el navegador muestre el aviso.
+Los avisos requieren una suscripción Web Push activa y las credenciales VAPID configuradas; que el
+servicio push acepte el mensaje no garantiza que el sistema operativo o el navegador lo muestre.
 
 Para habilitar el menú multilingüe:
 
@@ -82,24 +81,84 @@ Para habilitar el menú multilingüe:
 El español usa los nombres y descripciones originales del catálogo. El navegador guarda en caché
 las traducciones inglesa y francesa para poder reutilizarlas sin conexión.
 
-Para habilitar el inventario predictivo, aplicar BD/migracion_inventario_predictivo.sql y
-configurar en listInventario.php los insumos, existencias mínimas, cantidades de receta y
-fechas de caducidad/apertura reales. Las ventas descuentan las recetas configuradas dentro
-de la transacción del pedido y registran movimientos. La hoja calcula demanda con el promedio
-de las cuatro últimas ocurrencias del mismo día de la semana; no integra clima/eventos ni
-crea órdenes de compra automáticas.
+### Actualizar traducciones con un modelo local
 
-Para habilitar la fidelización verde, aplicar BD/migracion_fidelidad_verde.sql. El administrador
+Las traducciones del menú pueden regenerarse sin contratar una API de IA. En la computadora local,
+instalar Ollama y descargar, por ejemplo, `qwen2.5:3b` (`ollama pull qwen2.5:3b`). Iniciar Ollama,
+activar la base local `cafeteria` y ejecutar desde la raíz del proyecto:
+
+```powershell
+php tools/menu_traducciones_ia.php generar
+```
+
+El comando envía al Ollama local los nombres, descripciones y categorías del catálogo; genera una
+revisión JSON de inglés y francés en `%USERPROFILE%\.cafeliz\menu-traducciones-revision.json` y
+no modifica la base. Revisar el archivo, corregir manualmente los textos si hace falta y aplicar
+la versión aprobada con:
+
+```powershell
+php tools/menu_traducciones_ia.php aplicar "$env:USERPROFILE\.cafeliz\menu-traducciones-revision.json"
+```
+
+La aplicación actualiza solo nombres, descripciones y categorías traducidos, conserva la interfaz
+y las etiquetas de cupones, y rechaza revisiones si el catálogo cambió después de generarlas.
+El proceso solo acepta un endpoint Ollama en localhost; no usa OpenAI, no necesita claves y no
+contacta servicios remotos. No inventa ingredientes ni alérgenos: primero habría que añadir esos
+datos al catálogo si se quieren traducir. Para publicar los cambios, exportar únicamente las filas
+`en` y `fr` de `menu_traducciones_estaticas` desde phpMyAdmin local e importarlas en la base de
+InfinityFree. No exportar ni importar toda la base pública.
+
+Para habilitar el inventario predictivo, aplicar `BD/migracion_inventario_predictivo.sql` y
+configurar los insumos, existencias mínimas, cantidades de receta y fechas de caducidad/apertura
+reales. Las ventas descuentan las recetas configuradas dentro de la transacción del pedido y
+registran movimientos. La demanda base usa el promedio de las cuatro últimas ocurrencias del
+mismo día de la semana.
+
+Para añadir el contexto de clima y eventos, aplicar después
+`BD/migracion_pronostico_contextual.sql`. El panel consulta el pronóstico diario de Open-Meteo
+por HTTPS, sin clave, y conserva el último resultado durante 30 minutos. Si la API falla, informa
+el estado y usa el pronóstico guardado de hoy, si existe; sin un dato de hoy no aplica un ajuste
+meteorológico. El servidor necesita cURL y acceso HTTPS saliente a `api.open-meteo.com`.
+El servicio se atribuye en el panel; revisar los términos de Open-Meteo antes de redistribuir los
+datos.
+
+La ubicación inicial es el centro aproximado de Tulancingo de Bravo, Hidalgo
+(20.080550, -98.368310), no la dirección física del negocio. Un administrador puede sustituirla
+por las coordenadas del local. Los eventos se registran manualmente con coordenadas, horario y
+un porcentaje de impacto esperado; solo los que coinciden con el día y quedan a 2 km o menos
+del punto configurado se muestran como considerados. Los porcentajes de clima y eventos son
+reglas académicas editables, no estimaciones aprendidas ni resultados validados: por defecto,
+las bebidas frías reciben +10% si la máxima alcanza 25 °C y las calientes +10% si es de 18 °C
+o menos. La migración marca inicialmente como fríos los productos de la categoría `Bebidas`;
+el administrador puede cambiar la sensibilidad de cada producto y ajustar umbrales y factores.
+La lluvia se muestra pero no modifica la demanda. Los impactos de eventos se suman, y la suma
+combinada con clima se limita a +200%. La hoja sigue siendo una referencia y no crea órdenes de compra ni se
+genera automáticamente a las 5:30 AM; no hay una tarea programada nueva en esta integración.
+
+Para habilitar la fidelización verde, aplicar `BD/migracion_fidelidad_verde.sql` y,
+después de `BD/migracion_precios_historicos.sql`, `BD/migracion_cupones_verdes.sql`.
+El administrador
 puede asignar el cargo `barista` desde la gestión de usuarios. Los clientes generan un QR
 temporal de un solo uso, que el barista escanea después de confirmar el uso de una taza
 reutilizable. Cada registro suma 10 puntos y cuenta como un vaso evitado; cada ocho vasos
-genera un cupón de bebida gratis. Las equivalencias configuradas por vaso son 80 g de CO₂,
-15 g de residuos y 250 ml de agua. Los cupones se validan una sola vez en la pantalla de barra.
+genera un cupón para una bebida de la categoría `Bebidas`, válido por 14 días. El cliente puede
+seleccionar el cupón y una bebida de su pedido en el checkout; el servidor calcula el descuento,
+lo guarda con la orden y consume el cupón en una sola transacción. La billetera conserva el
+historial de cupones disponibles, canjeados y vencidos. Las equivalencias configuradas por vaso
+son 80 g de CO₂, 15 g de residuos y 250 ml de agua. El progreso personal se muestra con ocho
+iconos de vasos. Si el cliente activó Push, el escaneo del barista confirma el registro y un proceso
+programado le recuerda usar el cupón cuando esté por vencer.
 El QR se genera en el navegador con la dependencia local `qrcodejs`; el escaneo con cámara
 requiere HTTPS (excepto localhost) y navegadores compatibles con `BarcodeDetector`. También
 se puede introducir el contenido de un QR manualmente o con un lector externo.
 
+Los avisos de cupones se procesan con el mismo workflow de GitHub Actions cada cinco minutos. Se
+intentan durante los tres días anteriores al vencimiento, hasta cinco veces con intervalos de cinco
+minutos. Requieren que el cliente tenga activadas las notificaciones Web Push.
+
 Pruebas locales reproducibles: python -u tests/verificar_backend.py (MySQL de XAMPP activo).
+La autenticación HMAC del workflow también se puede comprobar sin MySQL con
+`php tests/verificar_autenticacion_tareas.php`.
 
 ## Capacidades PWA
 La aplicación integrada usa un manifest y un service worker para todos los módulos. Los iconos de
@@ -116,36 +175,66 @@ adaptable; el escáner usa `BarcodeDetector` cuando existe y conserva una altern
 manual cuando el navegador no ofrece esa API.
 
 ## Modo sin conexión
-El service worker guarda el shell, hojas de estilo, logos, iconos e imágenes principales de la app,
-además de los recursos estáticos solicitados y las páginas públicas GET de `index.php` y `menu.php`
-cuando se abren en línea sin iniciar sesión. Las variantes del menú
-usan la copia general; las traducciones recibidas se guardan localmente por idioma durante 30 días.
-Ese contenido es una instantánea y puede quedar desactualizado.
+El service worker guarda el shell, hojas de estilo, scripts, fuentes, logos, iconos e imágenes de
+productos de la app. Usa Cache First para recursos con versión en la URL y Stale While Revalidate
+para los recursos estáticos sin versión. Las navegaciones usan Network First. Se guardan únicamente
+las vistas públicas GET de `index.php`, `menu.php`, `login.php`, `registro.php` y `reservas.php`
+cuando se abren en línea sin iniciar sesión y sin parámetros; al abrir una variante del menú sin
+conexión se muestra la copia general. El contenido guardado indica que puede estar desactualizado.
+Las vistas administrativas y personalizadas, así como datos de sesión, APIs y respuestas POST, no se
+guardan. Si una página no tiene una copia pública segura, se muestra la experiencia offline.
+Las traducciones recibidas se guardan localmente por idioma durante 30 días.
 
 Al abrir reservas sin conexión se ofrece guardar localmente fecha, hora, pase y accesibilidad como
-borrador. Al reconectar, el usuario debe abrir de nuevo el formulario, consultar disponibilidad y
-enviar su solicitud; el borrador no aparta una mesa. En inventario solo se conserva una nota local,
-no existencias ni movimientos. Huella verde muestra las instrucciones offline, pero QR, métricas y
-cupones requieren conexión. Pedidos, traducciones no guardadas, disponibilidad, administración y
-respuestas POST nunca se almacenan ni se sincronizan automáticamente. No se cachean páginas con
-`no-store`; la vista personal y las páginas de sesión se eliminan del caché.
+borrador. Una copia pública previa de reservas se muestra como solo lectura, con aviso de datos
+posiblemente desactualizados y el mismo borrador local. Al reconectar, el usuario debe consultar de
+nuevo la disponibilidad; el borrador no aparta una mesa. Las vistas de huella verde e inventario no guardan
+datos privados; si no hay una copia pública se muestran las instrucciones offline. En inventario solo
+se conserva una nota local, no existencias ni movimientos. QR, métricas, cupones, pedidos,
+traducciones no guardadas, disponibilidad, administración y respuestas POST requieren conexión y
+nunca se sincronizan automáticamente. Se respeta `Cache-Control: no-store`.
 
 ## Notificaciones push
-Aplicar una vez `BD/migracion_notificaciones_push.sql` y desplegar la dependencia PHP con
-`composer install --no-dev --optimize-autoloader`. Generar las claves VAPID en el servidor con:
+La implementación usa Web Push estándar con VAPID. Aplicar una vez
+`BD/migracion_notificaciones_push.sql` en la base `cafeteria`. Configurar en PHP:
+`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT`. La clave privada debe permanecer como
+secreto del servidor; nunca se incluye en JavaScript ni se publica. La clave pública se entrega al
+navegador para crear la suscripción. `minishlink/web-push` ya está declarado en Composer; desplegar
+`vendor` como de costumbre.
 
-```sh
-php -r "require 'vendor/autoload.php'; var_export(Minishlink\\WebPush\\VAPID::createVapidKeys());"
-```
+El usuario inicia sesión, acepta el permiso mediante el botón y activa las notificaciones en cada
+dispositivo. La suscripción Web Push se guarda asociada a la cuenta. El Service Worker de CaféLiz
+recibe y muestra las notificaciones en segundo plano, incluso cuando la aplicación no está abierta.
+Después de desplegar esta versión, desactiva y vuelve a activar las notificaciones en cada
+dispositivo para recrear la suscripción con la clave VAPID de CaféLiz. Si ya aplicaste la migración
+aditiva de FCM, no borres tablas ni columnas: los campos extra no afectan a Web Push. No vuelvas a
+aplicar esa migración ni registres nuevos tokens FCM.
 
-Configurar `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` como variables privadas de PHP;
-no guardar la clave privada en el repositorio. El usuario debe iniciar sesión, aceptar permiso y
-activar las notificaciones en el dispositivo. Se notifican nuevas solicitudes de reserva al cliente,
-recordatorios de coworking una hora antes, cupones verdes al cliente y cruces del nivel mínimo de
-inventario a administradores suscritos. Los recordatorios los envía el proceso programado descrito
-arriba, no el service worker. Si el navegador no admite Web Push, la conexión no es HTTPS o falta
-configuración/migración, la app informa que no están disponibles. El soporte de Push en iOS depende
-de la versión y de que el sitio esté instalado en la pantalla de inicio.
+La zona horaria opcional `APP_TIMEZONE` usa `America/Mexico_City` por defecto y se aplica tanto a
+PHP como a la sesión MySQL de reservas y recordatorios.
+
+### Automatizar recordatorios en InfinityFree
+
+InfinityFree no ejecuta cron tradicional. El workflow `.github/workflows/recordatorios.yml` de este
+repositorio intenta llamar cada cinco minutos a los procesadores PHP mediante HTTPS. Para activarlo:
+
+1. Configurar `RECORDATORIOS_HMAC_SECRET` como variable privada de PHP en InfinityFree y como
+   **Actions secret** del repositorio de GitHub. Usa el mismo valor aleatorio de al menos 32
+   caracteres en ambos sitios. Para generar uno en una máquina confiable, ejecuta:
+   `php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"`.
+2. Desplegar el código y workflow, y ejecutar manualmente **Procesar recordatorios CaféLiz** desde
+   Actions. Repetir la prueba en la URL publicada y revisar el resultado de ambos procesadores.
+3. Confirmar que el workflow recibe HTTP 200 para ambos endpoints. Si InfinityFree responde con una
+   página anti-bots, 403 u otro bloqueo, esta alternativa **no está operativa** y los recordatorios
+   no se pueden garantizar en ese hosting; no se debe interpretar el workflow creado como prueba
+   de entrega.
+
+El workflow envía una firma HMAC con marca temporal; el secreto no se incluye en la URL ni en el
+código del repositorio. Los endpoints no aceptan llamadas GET ni solicitudes sin firma válida. La
+frecuencia gratuita de GitHub Actions es de mejor esfuerzo: la ejecución puede retrasarse y no
+garantiza precisión de reloj. Los recordatorios de reserva y cupón conservan sus colas y reintentos
+actuales; los demás avisos Web Push se intentan cuando ocurre el evento en CaféLiz. Se requiere
+HTTPS. En iOS, el soporte depende de la versión y de instalar la PWA en la pantalla de inicio.
 
 El service worker comprueba actualizaciones al iniciar y al volver a abrir la app con conexión.
 Cuando detecta una versión nueva muestra el botón de actualización; al aceptarla activa el worker y

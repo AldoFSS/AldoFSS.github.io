@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compra</title>
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script>
-        emailjs.init('g-LYD0idyVihTx0P3');
-    </script>
     <style>
         .text {
             font-weight: bold;
@@ -34,18 +30,19 @@
             </div>
             <div class="modal-body">
                 <div class="row gx-3">
-                    <div class="col-12">
-                        <div class="d-flex flex-column">
-                            <label for="personName" class="text mb-1" data-i18n="nameLabel">Nombre:</label>
-                            <input class="form-control mb-3" id="personName" name="personName" type="text" placeholder="Nombre" data-i18n-placeholder="namePlaceholder" required>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <div class="d-flex flex-column">
-                            <label for="email" class="text mb-1" data-i18n="emailLabel">Correo:</label>
-                            <input class="form-control mb-3" id="email" name="email" type="email" placeholder="Correo" data-i18n-placeholder="emailPlaceholder" required>
-                        </div>
-                    </div>
+                    <section class="checkout-green-coupon col-12" aria-labelledby="green-coupon-title">
+                        <h4 id="green-coupon-title"><i class="bi bi-ticket-perforated" aria-hidden="true"></i> <span data-i18n="greenCouponTitle">Recompensa Huella verde</span></h4>
+                        <p data-i18n="greenCouponHelp">Usa un cupón vigente para liberar una bebida incluida en tu pedido.</p>
+                        <label for="green-coupon-select" data-i18n="greenCouponLabel">Cupón disponible</label>
+                        <select class="form-select mb-3" id="green-coupon-select">
+                            <option value="" data-i18n="greenCouponNone">No usar cupón</option>
+                        </select>
+                        <label for="green-coupon-product" data-i18n="greenCouponProductLabel">Bebida que deseas recibir gratis</label>
+                        <select class="form-select" id="green-coupon-product" disabled>
+                            <option value="" data-i18n="greenCouponChooseProduct">Selecciona una bebida de tu pedido</option>
+                        </select>
+                        <p id="green-coupon-status" class="checkout-coupon-status" role="status" aria-live="polite"></p>
+                    </section>
                     <p class="text-muted" data-i18n="paymentNote">Se registrará tu pedido. El pago se realiza en caja; esta aplicación todavía no procesa tarjetas.</p>
                 </div>
             </div>

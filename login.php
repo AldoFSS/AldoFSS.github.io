@@ -1,4 +1,13 @@
-<?php require_once __DIR__ . '/PHP/seguridad.php'; iniciarSesionSegura(); ?>
+<?php
+require_once __DIR__ . '/PHP/seguridad.php';
+iniciarSesionSegura();
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && empty($_GET) && empty($_SESSION['ID_Usuario'])) {
+    header('Cache-Control: private, no-cache, must-revalidate');
+    header('X-PWA-Cacheable: public');
+} else {
+    header('Cache-Control: no-store');
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,27 +19,23 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="IMG/cafeliz-pwa-192-v2.png">
 </head>
-<body>
+<body class="auth-page" data-offline-view="true">
 <?php include("includes/navbar.php");?>
-<center>
-    <!--FORMULARIO---->
-    <strong> <h1 class="titulo">Regístrate</strong></h1> 
-      <form action="PHP/FuncionesUsuario.php"form class="form" method="POST" name="frm"><br>  
-      <input type="hidden" name="accion" value="BuscarUsuario">     
-        <!--CAJAS-DE-ENTRADA-DE-DATOS------------------------------------------------>
-        Iniciar Sesión<br>
-        <br><input class="cajas" type="text" name="nombre_usuario" placeholder="Ingresa tu Usuario" required maxlength="30">
-        <input class="cajas" type="password" name="contraseña_usuario" placeholder="Ingresa tu Password" required maxlength="30">
-        <br>
-        <!--BOTON-DE-INGRESAR-------------------------->
+<main class="auth-content">
+    <h1 class="titulo">Iniciar sesión</h1>
+    <form action="PHP/FuncionesUsuario.php" class="form auth-form" method="POST" name="frm">
+        <input type="hidden" name="accion" value="BuscarUsuario">
+        <label class="visually-hidden" for="login-username">Usuario</label>
+        <input id="login-username" class="cajas" type="text" name="nombre_usuario"
+            placeholder="Ingresa tu Usuario" autocomplete="username" required maxlength="30">
+        <label class="visually-hidden" for="login-password">Contraseña</label>
+        <input id="login-password" class="cajas" type="password" name="contraseña_usuario"
+            placeholder="Ingresa tu Password" autocomplete="current-password" required maxlength="30">
         <input type="submit" class="btnRegistro" value="Ingresar">
-         <p class="nota">*Al registrarse agregamos un café gratis a tu pedido</p><br>
-            <!--AÚN NO-TENGO-CUENTA----------------------------------------------------------->
+        <p class="nota">*Al registrarse agregamos un café gratis a tu pedido</p>
         <p class="tengo-cuenta"><a href="registro.php" class="tengo-cuenta">Aún no tengo cuenta</a></p>
-		<a href="#" id="back-to-top" title="Back to top" style="display: none;"><i class="fa fa-paper-plane-o" aria-hidden="true"></i></a>
-</center>
-</form><br>
+    </form>
+</main>
 <?php include("includes/footer.html");?>
-<script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

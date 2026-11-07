@@ -1,5 +1,5 @@
--- Aplicar una vez en la base cafeteria para habilitar las solicitudes de coworking.
--- Los espacios de ejemplo y sus atributos deben validarse contra el plano real del local.
+-- Aplicar o volver a ejecutar en la base cafeteria para habilitar o ampliar el coworking.
+-- El catalogo es ilustrativo; validar los atributos de acceso contra el local real.
 CREATE TABLE IF NOT EXISTS espacios_reserva (
     ID_Espacio INT NOT NULL AUTO_INCREMENT,
     Nombre VARCHAR(80) NOT NULL,
@@ -19,6 +19,22 @@ VALUES
     (5, 'Pared 1', 0, 1, 'Contacto AC'),
     (6, 'Pared 2', 0, 0, 'Contacto AC')
 ON DUPLICATE KEY UPDATE Nombre=VALUES(Nombre);
+
+INSERT INTO espacios_reserva (Nombre, Silla_Ruedas, Zurdo, Conexiones)
+SELECT nuevos_espacios.Nombre, nuevos_espacios.Silla_Ruedas, nuevos_espacios.Zurdo, nuevos_espacios.Conexiones
+FROM (
+    SELECT 'Ventana 3' AS Nombre, 1 AS Silla_Ruedas, 0 AS Zurdo, 'Contacto AC y USB-C' AS Conexiones
+    UNION ALL SELECT 'Ventana 4', 0, 1, 'Contacto AC'
+    UNION ALL SELECT 'Centro 3', 1, 0, 'Contacto AC y USB-C'
+    UNION ALL SELECT 'Centro 4', 0, 0, 'Contacto AC'
+    UNION ALL SELECT 'Centro 5', 0, 1, 'Contacto AC'
+    UNION ALL SELECT 'Pared 3', 1, 0, 'Contacto AC y USB-C'
+    UNION ALL SELECT 'Pared 4', 0, 0, 'Contacto AC'
+    UNION ALL SELECT 'Mesa comunitaria', 1, 0, 'Contacto AC y USB-C'
+) AS nuevos_espacios
+WHERE NOT EXISTS (
+    SELECT 1 FROM espacios_reserva existente WHERE existente.Nombre = nuevos_espacios.Nombre
+);
 
 CREATE TABLE IF NOT EXISTS reservas_espacios (
     ID_Reserva INT NOT NULL AUTO_INCREMENT,

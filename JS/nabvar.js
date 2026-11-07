@@ -3,6 +3,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!drawer) return;
     const cartList = drawer.querySelector('.cart_items');
     const toast = document.getElementById('cart-toast');
+    const couponSelect = document.getElementById('green-coupon-select');
+    const couponProductSelect = document.getElementById('green-coupon-product');
+    const couponStatus = document.getElementById('green-coupon-status');
     const money = value => Number(value).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     const text = (key, fallback, values = {}) =>
         window.cafelizI18n?.text(key, values) || fallback;
@@ -33,8 +36,104 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch { return []; }
     }
     let cart = readCart();
+    let checkoutOptions = null;
     let toastTimer;
     const buttonTimers = new WeakMap();
+
+    function selectedCouponDiscountCents() {
+        if (!couponSelect?.value || !couponProductSelect?.value) return 0;
+        const product = cart.find(item => item.id === couponProductSelect.value);
+        return product ? Math.round(product.price * 100) : 0;
+    }
+
+    function updateCouponProducts() {
+        if (!couponSelect || !couponProductSelect) return;
+        const previousProduct = couponProductSelect.value;
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = text('greenCouponChooseProduct', 'Selecciona una bebida de tu pedido');
+        couponProductSelect.replaceChildren(placeholder);
+
+        const inCart = new Set(cart.map(item => item.id));
+        const beverages = (checkoutOptions?.bebidas || []).filter(item => inCart.has(String(item.id)));
+        beverages.forEach(beverage => {
+            const option = document.createElement('option');
+            option.value = String(beverage.id);
+            const name = window.cafelizI18n?.productName(beverage.id, beverage.nombre) || beverage.nombre;
+            const product = cart.find(item => item.id === option.value);
+            option.textContent = name + ' · $' + money(product?.price || 0);
+            couponProductSelect.append(option);
+        });
+
+        couponProductSelect.disabled = !couponSelect.value || beverages.length === 0;
+        if (beverages.some(item => String(item.id) === previousProduct)) {
+            couponProductSelect.value = previousProduct;
+        }
+        if (!couponSelect.value) {
+            couponStatus.textContent = checkoutOptions?.cupones.length
+                ? text('greenCouponHelp', 'Usa un cupón vigente para liberar una bebida incluida en tu pedido.')
+                : text('greenCouponEmpty', 'No tienes cupones vigentes. Completa ocho vasos reutilizables para obtener uno.');
+        } else if (!beverages.length) {
+            couponProductSelect.value = '';
+            couponStatus.textContent = text('greenCouponAddDrink', 'Agrega una bebida al pedido para usar este cupón.');
+        } else if (couponProductSelect.value) {
+            couponStatus.textContent = text('greenCouponSavings', 'Descuento estimado: ${discount}. Se verificará al registrar el pedido.', {
+                discount: money(selectedCouponDiscountCents() / 100)
+            });
+        } else {
+            couponStatus.textContent = text('greenCouponChooseDrink', 'Elige qué bebida de tu pedido quieres recibir gratis.');
+        }
+    }
+
+    async function loadCheckoutPromotions() {
+        const submitButton = document.getElementById('payButton');
+        const previousCoupon = couponSelect.value;
+        couponStatus.textContent = text('greenCouponLoading', 'Buscando cupones vigentes…');
+        try {
+            const response = await fetch('PHP/FidelidadVerde.php?accion=checkout', {
+                credentials: 'same-origin',
+                headers: {Accept: 'application/json'}
+            });
+            const data = await response.json().catch(() => null);
+            if (!data) throw new Error('No se pudo consultar la billetera de cupones.');
+            if (!response.ok || !data.success) throw new Error(data.message || 'No se pudieron cargar los cupones.');
+            checkoutOptions = data;
+            const none = document.createElement('option');
+            none.value = '';
+            none.textContent = text('greenCouponNone', 'No usar cupón');
+            couponSelect.replaceChildren(none);
+            data.cupones.forEach(coupon => {
+                const option = document.createElement('option');
+                option.value = coupon.codigo;
+                const expiry = new Date(coupon.expira.replace(' ', 'T')).toLocaleDateString(
+                    window.cafelizI18n?.language || 'es-MX'
+                );
+                option.textContent = text('greenCouponOption', 'Bebida gratis · vence {date}', {date: expiry});
+                couponSelect.append(option);
+            });
+            couponSelect.value = data.cupones.some(coupon => coupon.codigo === previousCoupon)
+                ? previousCoupon : '';
+            updateCouponProducts();
+        } catch (error) {
+            checkoutOptions = null;
+            couponSelect.replaceChildren();
+            const none = document.createElement('option');
+            none.value = '';
+            none.textContent = text('greenCouponNone', 'No usar cupón');
+            couponSelect.append(none);
+            couponProductSelect.replaceChildren();
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = text('greenCouponChooseProduct', 'Selecciona una bebida de tu pedido');
+            couponProductSelect.append(placeholder);
+            couponProductSelect.disabled = true;
+            couponStatus.textContent = error.message + ' ' +
+                text('greenCouponContinue', 'Puedes continuar sin cupón.');
+            console.warn('No se pudieron cargar las opciones de cupones.', error);
+        } finally {
+            submitButton.disabled = false;
+        }
+    }
 
     function notify(title, detail = '', showCart = false) {
         if (!toast) return;
@@ -89,8 +188,10 @@ document.addEventListener('DOMContentLoaded', () => {
             {count: totalItems, total: money(totalCents / 100)}));
         document.getElementById('sales_cart').disabled = !cart.length;
         document.getElementById('empty_cart').disabled = !cart.length;
+        updateCouponProducts();
+        const totalForCheckout = Math.max(0, totalCents - selectedCouponDiscountCents());
         document.getElementById('totalAmount').textContent = text('orderButton',
-            'Registrar pedido · $' + money(totalCents / 100), {total: money(totalCents / 100)});
+            'Registrar pedido · $' + money(totalForCheckout / 100), {total: money(totalForCheckout / 100)});
         document.querySelectorAll('[data-cart-quantity]').forEach(badge => {
             const quantity = cart.find(item => item.id === badge.dataset.cartQuantity)?.quantity || 0;
             badge.hidden = !quantity;
@@ -182,9 +283,14 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('close_btn').focus();
         }
     });
-    document.getElementById('sales_cart').addEventListener('click', () => {
+    couponSelect?.addEventListener('change', updateCouponProducts);
+    couponProductSelect?.addEventListener('change', updateCouponProducts);
+    document.addEventListener('cafeliz:languagechange', updateCouponProducts);
+    document.getElementById('sales_cart').addEventListener('click', async () => {
         if (!ProductsInCart() || sendingOrder) return;
         closeModalAndReset();
+        document.getElementById('payButton').disabled = true;
+        await loadCheckoutPromotions();
         bootstrap.Modal.getOrCreateInstance(document.getElementById('checkoutModal')).show();
     });
     window.addEventListener('storage', event => {
@@ -204,15 +310,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Tu carrito está guardado. Conéctate para confirmar el pedido.'), 'warning');
             return;
         }
-        const name = document.getElementById('personName').value.trim();
-        const emailInput = document.getElementById('email');
-        if (!name || !emailInput.value || !emailInput.checkValidity()) {
-            Swal.fire(text('checkDetails', 'Revisa tus datos'), text('validNameEmail',
-                'Escribe tu nombre y un correo válido.'), 'warning');
+        const orderCart = cart.map(item => ({id: String(item.id), quantity: item.quantity}))
+            .sort((a, b) => Number(a.id) - Number(b.id));
+        const couponCode = couponSelect.value;
+        const couponProductId = couponProductSelect.value;
+        if (couponCode && !couponProductId) {
+            Swal.fire(text('greenCouponChooseDrinkTitle', 'Elige una bebida'),
+                text('greenCouponChooseDrink', 'Elige qué bebida de tu pedido quieres recibir gratis.'), 'warning');
             return;
         }
-        const fingerprint = JSON.stringify(cart.map(item => ({id: String(item.id), quantity: item.quantity}))
-            .sort((a, b) => Number(a.id) - Number(b.id)));
+        const fingerprint = couponCode
+            ? JSON.stringify({cart: orderCart, couponCode, couponProductId})
+            : JSON.stringify(orderCart);
         let pending;
         try {
             pending = JSON.parse(localStorage.getItem('cafeliz-pending-order') || 'null');
@@ -232,7 +341,11 @@ document.addEventListener('DOMContentLoaded', () => {
         $.ajax({
             url: './PHP/FuncionesCompra.php',
             type: 'POST',
-            data: JSON.stringify({cart: JSON.parse(fingerprint), requestId: pending.requestId}),
+            data: JSON.stringify({
+                cart: orderCart,
+                requestId: pending.requestId,
+                ...(couponCode ? {couponCode, couponProductId} : {})
+            }),
             contentType: 'application/json',
             dataType: 'json',
             success: function(response) {
@@ -241,21 +354,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         text('tryAgain', 'Reintenta sin cambiar el carrito.'), 'error');
                     return;
                 }
-                // Vaciar al confirmar en el servidor, independientemente del correo.
                 clearCart();
                 localStorage.removeItem('cafeliz-pending-order');
                 bootstrap.Modal.getInstance(document.getElementById('checkoutModal'))?.hide();
                 closeModalAndReset();
                 const data = response.data;
-                Swal.fire(text('orderRegisteredTitle', 'Pedido registrado'), text('orderRegistered',
+                const message = text('orderRegistered',
                     'Pedido #{orderId} por ${total}. El cobro se realiza en caja.',
-                    {orderId: data.orderId, total: data.total}), 'success');
-                if (typeof emailjs !== 'undefined') {
-                    emailjs.send('service_drxc3un', 'template_q3ldygo', {
-                        user_name: data.userName, total: '$' + data.total, fecha: data.fecha,
-                        productos: data.productos.map(item => item.Nombre_Producto + ' - Cantidad: ' + item.Cantidad).join('\n')
-                    }).catch(error => console.warn('Pedido registrado; correo no enviado.', error));
-                }
+                    {orderId: data.orderId, total: data.total});
+                const discountMessage = Number(data.discount) > 0
+                    ? '\n' + text('greenCouponApplied', 'Cupón aplicado: ahorraste ${discount}.',
+                        {discount: data.discount})
+                    : '';
+                couponSelect.value = '';
+                couponProductSelect.value = '';
+                updateCart();
+                Swal.fire(text('orderRegisteredTitle', 'Pedido registrado'), message + discountMessage, 'success');
             },
             error: function(xhr) {
                 Swal.fire('Pedido sin confirmar', xhr.responseJSON?.message || 'No se recibió confirmación. Reintenta sin cambiar el carrito.', 'error');

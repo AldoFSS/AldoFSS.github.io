@@ -254,14 +254,46 @@
 /*-----------------------------------------*/
 /*--FORMULARIO-------------------*/
 .form{
-    width: 450px;
-    padding: 30px;
+    width: min(450px, 100%);
+    box-sizing: border-box;
+    padding: clamp(20px, 5vw, 30px);
     margin: auto;
-    margin-top: 100px;
     background: rgba(15, 50, 72, 0.3);
     border-radius: 5px;
-   background: #f1f1f1;
+    background: #f1f1f1;
 
+}
+body.auth-page {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+}
+.auth-content {
+    width: min(100% - 24px, 480px);
+    margin: 0 auto;
+    padding: clamp(28px, 7vw, 64px) 0;
+}
+.auth-content .titulo {
+    margin: 0 0 20px;
+    font-size: clamp(1.7rem, 5vw, 2.4rem);
+}
+.auth-content .auth-form {
+    width: 100%;
+    max-width: 450px;
+    margin: 0 auto;
+}
+.auth-content .cajas {
+    display: block;
+    box-sizing: border-box;
+    min-height: 48px;
+}
+.auth-content .nota {
+    padding: 8px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+body.auth-page > footer {
+    margin-top: auto;
 }
 /*--TITULO-----------------------*/
 .titulo{

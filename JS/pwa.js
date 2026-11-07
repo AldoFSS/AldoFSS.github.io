@@ -6,29 +6,39 @@
   let waitingWorker;
   let refreshing = false;
 
+  const isOfflineReadOnly = () => !navigator.onLine ||
+    document.body?.dataset.pwaCached === "true";
+
   const updateConnectionStatus = () => {
     const offline = !navigator.onLine;
+    const cachedPage = document.body?.dataset.pwaCached === "true";
     if (status) {
-      status.textContent = offline ? "Sin conexión" : "";
+      status.textContent = offline
+        ? "Sin conexión · el contenido guardado puede estar desactualizado."
+        : cachedPage ? "Mostrando una copia guardada; los datos pueden estar desactualizados." : "";
       status.classList.toggle("is-offline", offline);
     }
 
     if (document.body?.dataset.offlineView !== "true") return;
-    document.body.classList.toggle("offline-read-only", offline);
+    const readOnly = offline || cachedPage;
+    document.body.classList.toggle("offline-read-only", readOnly);
     let banner = document.getElementById("offline-read-only-banner");
-    if (offline && !banner) {
+    if (readOnly && !banner && !document.getElementById("pwa-cache-notice")) {
       banner = document.createElement("p");
       banner.id = "offline-read-only-banner";
       banner.className = "pwa-offline-banner";
       banner.setAttribute("role", "status");
-      banner.textContent = "Sin conexión: estás viendo la última versión guardada. Las acciones están desactivadas.";
+      banner.textContent = offline
+        ? "Sin conexión: estás viendo la última versión guardada. Las acciones están desactivadas."
+        : "Se muestra una copia guardada. Recarga para consultar datos actuales y reactivar las acciones.";
       document.querySelector("main")?.prepend(banner);
-    } else if (!offline && banner) {
+    } else if (!readOnly && banner) {
       banner.remove();
     }
 
-    document.querySelectorAll("main button, main input, main select, main textarea").forEach((control) => {
-      if (offline) {
+    document.querySelectorAll("button, input, select, textarea").forEach((control) => {
+      if (control.closest("[data-offline-local]")) return;
+      if (readOnly) {
         if (!control.hasAttribute("data-offline-original-disabled")) {
           control.dataset.offlineOriginalDisabled = String(control.disabled);
         }
@@ -41,15 +51,17 @@
   };
 
   document.addEventListener("click", (event) => {
-    if (navigator.onLine || document.body?.dataset.offlineView !== "true") return;
-    if (event.target.closest("main button, main input, main select, main textarea")) {
+    if (!isOfflineReadOnly() || document.body?.dataset.offlineView !== "true") return;
+    if (event.target.closest("[data-offline-local]")) return;
+    if (event.target.closest("button, input, select, textarea")) {
       event.preventDefault();
       event.stopImmediatePropagation();
     }
   }, true);
   document.addEventListener("submit", (event) => {
-    if (navigator.onLine || document.body?.dataset.offlineView !== "true") return;
-    if (event.target.closest("main form")) {
+    if (!isOfflineReadOnly() || document.body?.dataset.offlineView !== "true") return;
+    if (event.target.closest("[data-offline-local]")) return;
+    if (event.target.closest("form")) {
       event.preventDefault();
       event.stopImmediatePropagation();
     }
@@ -108,21 +120,24 @@
     notificationsButton.hidden = false;
     let subscription;
     let publicKey;
+    const fetchPublicKey = async () => {
+      const keyResponse = await fetch("PHP/PushNotifications.php?accion=clave", {
+        credentials: "same-origin",
+        headers: { Accept: "application/json" }
+      });
+      const keyResult = await keyResponse.json().catch(() => null);
+      if (!keyResult || !keyResponse.ok || !keyResult.success || !keyResult.publicKey) {
+        throw new Error(keyResult?.message || "Las notificaciones no están configuradas en el servidor.");
+      }
+      return keyResult.publicKey;
+    };
     try {
       subscription = await registration.pushManager.getSubscription();
       notificationsButton.textContent = subscription
         ? "Desactivar notificaciones"
         : "Activar notificaciones";
       if (!subscription) {
-        const keyResponse = await fetch("PHP/PushNotifications.php?accion=clave", {
-          credentials: "same-origin",
-          headers: { Accept: "application/json" }
-        });
-        const keyResult = await keyResponse.json().catch(() => null);
-        if (!keyResult || !keyResponse.ok || !keyResult.success || !keyResult.publicKey) {
-          throw new Error(keyResult?.message || "Las notificaciones no están configuradas en el servidor.");
-        }
-        publicKey = keyResult.publicKey;
+        publicKey = await fetchPublicKey();
       }
     } catch (error) {
       notificationsButton.hidden = true;
@@ -147,6 +162,7 @@
         if (permission !== "granted") {
           throw new Error("No se concedió permiso para mostrar notificaciones.");
         }
+        if (!publicKey) publicKey = await fetchPublicKey();
         const newSubscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: base64UrlToBytes(publicKey)

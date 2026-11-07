@@ -91,6 +91,13 @@
 #sidecart .cart_actions #sales_cart:hover:not(:disabled) { background: #d83b00; opacity: 1; }
 #sidecart .cart_actions #sales_cart:disabled { opacity: .4; cursor: default; }
 #sidecart .cart_actions #empty_cart { display: block; margin: 10px auto 0; border: 0; background: transparent; padding: 7px 14px; min-height: 36px; font-size: 12px; text-transform: none; letter-spacing: 0; color: var(--cafe-muted); }
+.checkout-green-coupon { margin: 4px 0 16px; padding: 16px; border: 1px solid #dfe9df; border-radius: 14px; background: #f5faf5; }
+.checkout-green-coupon h4 { margin: 0 0 6px; color: #234b36; font-size: 15px; font-weight: 750; }
+.checkout-green-coupon h4 i { color: #398454; }
+.checkout-green-coupon > p { margin: 0 0 12px; color: var(--cafe-muted); font-size: 12px; line-height: 1.5; }
+.checkout-green-coupon label { display: block; margin: 10px 0 5px; color: var(--cafe-ink); font-size: 12px; font-weight: 650; }
+.checkout-green-coupon .form-select { min-height: 42px; border-color: #cbd9ce; border-radius: 9px; font-size: 13px; }
+.checkout-green-coupon .checkout-coupon-status { min-height: 1.25em; margin: 9px 0 0; color: #315d3e; font-size: 12px; font-weight: 600; }
 #sidecart .cart_actions #empty_cart:disabled { opacity: .4; cursor: default; }
 .cart-empty { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 12px; }
 .cart-empty > i { display: grid; place-items: center; width: 74px; height: 74px; background: var(--cafe-soft); border-radius: 50%; font-size: 28px; color: var(--cafe-accent); margin-bottom: 22px; }

@@ -63,7 +63,7 @@
     flex-wrap: nowrap;
 }
 
-.Barra .navbar-expand-xl .navbar-collapse li {
+.Barra .navbar-expand-xxl .navbar-collapse li {
     margin: 0;
     font-size: .92rem;
 }
@@ -390,7 +390,7 @@
     outline-offset: 3px;
 }
 
-@media (max-width: 1199.98px) {
+@media (max-width: 1399.98px) {
     .Barra .navbar > .container {
         flex-wrap: wrap;
     }

@@ -1,8 +1,45 @@
-body{margin-top:20px;}
 .footer {
     background:#232a34;
-	padding-bottom: 50px;
-	padding-top: 80px;
+    width: 100%;
+    padding: 0;
+}
+.footer-brand-social {
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.footer-logo-wrapper img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+.social-media-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    max-width: 100%;
+}
+.social-media-buttons a {
+    display: flex;
+    flex: 0 0 40px;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background-color: #fff;
+    text-decoration: none;
+}
+.social-media-buttons a:hover {
+    color: #fff;
+    background-color: #555;
+}
+.social-media-buttons i {
+    color: #000;
+}
+.credits {
+    line-height: 1.6;
+    overflow-wrap: anywhere;
 }
 .footer_menu {
 	margin-bottom: 20px;

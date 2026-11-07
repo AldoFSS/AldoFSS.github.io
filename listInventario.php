@@ -3,10 +3,27 @@ require_once __DIR__ . '/PHP/seguridad.php';
 exigirAdministrador();
 header('Cache-Control: no-store');
 require __DIR__ . '/BD/conexion.php';
+require_once __DIR__ . '/PHP/PronosticoInventario.php';
 
 $productos = [];
 $q = $connection->query('SELECT id, Product_Nombre FROM menuproductos ORDER BY Product_Nombre');
 while ($row = $q->fetch_assoc()) $productos[] = $row;
+$configuracionPronostico = $connection->query(
+    'SELECT * FROM inventario_pronostico_config WHERE ID_Config=1'
+)->fetch_assoc();
+if (!$configuracionPronostico) {
+    throw new RuntimeException('Aplica BD/migracion_pronostico_contextual.sql para habilitar el pronóstico contextual.');
+}
+$clima = cargarPronosticoClima($connection, $configuracionPronostico);
+$sensibilidades = [];
+$q = $connection->query(
+    'SELECT p.id, COALESCE(s.Sensibilidad, \'neutra\') AS Sensibilidad
+    FROM menuproductos p
+    LEFT JOIN inventario_sensibilidad_clima s ON s.ID_Producto=p.id'
+);
+while ($row = $q->fetch_assoc()) {
+    $sensibilidades[(int) $row['id']] = (string) $row['Sensibilidad'];
+}
 $insumos = [];
 $q = $connection->query('SELECT * FROM inventario_insumos ORDER BY Nombre');
 while ($row = $q->fetch_assoc()) $insumos[] = $row;
@@ -19,6 +36,16 @@ $q = $connection->query(
     ORDER BY p.Product_Nombre, i.Nombre'
 );
 while ($row = $q->fetch_assoc()) $recetas[] = $row;
+$movimientos = [];
+$q = $connection->query(
+    'SELECT m.ID_Movimiento, m.ID_Insumo, m.ID_Orden, m.Tipo, m.Cantidad,
+        m.Stock_Anterior, m.Stock_Nuevo, m.Nota, m.Creado, i.Nombre, i.Unidad
+    FROM movimientos_inventario m
+    INNER JOIN inventario_insumos i ON i.ID_Insumo=m.ID_Insumo
+    ORDER BY m.Creado DESC, m.ID_Movimiento DESC
+    LIMIT 50'
+);
+while ($row = $q->fetch_assoc()) $movimientos[] = $row;
 
 $ventas = [];
 $q = $connection->query(
@@ -31,26 +58,89 @@ $q = $connection->query(
     GROUP BY d.ID_Productos'
 );
 while ($row = $q->fetch_assoc()) $ventas[(int) $row['ID_Productos']] = (float) $row['Unidades'];
-$connection->close();
-if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && empty($_GET)) {
-    header('X-PWA-Cache-View: 1');
+
+$zonaHoraria = new DateTimeZone('America/Mexico_City');
+$inicioDia = new DateTimeImmutable('today', $zonaHoraria);
+$finDia = $inicioDia->modify('+1 day');
+$inicioDiaSql = $inicioDia->format('Y-m-d H:i:s');
+$finDiaSql = $finDia->format('Y-m-d H:i:s');
+$consultaEventos = $connection->prepare(
+    'SELECT ID_Evento, Nombre, Descripcion, Inicio, Fin, Latitud, Longitud, Impacto_Porcentaje, Activo
+    FROM inventario_eventos_locales
+    WHERE Activo=1 AND Fin >= ? AND Inicio < ?
+    ORDER BY Inicio'
+);
+$consultaEventos->bind_param('ss', $inicioDiaSql, $finDiaSql);
+$consultaEventos->execute();
+$resultadoEventos = $consultaEventos->get_result();
+$eventosCercanos = [];
+while ($evento = $resultadoEventos->fetch_assoc()) {
+    $evento['DistanciaKm'] = distanciaKm(
+        (float) $configuracionPronostico['Latitud'],
+        (float) $configuracionPronostico['Longitud'],
+        (float) $evento['Latitud'],
+        (float) $evento['Longitud']
+    );
+    if ($evento['DistanciaKm'] <= 2.0) {
+        $eventosCercanos[] = $evento;
+    }
+}
+$eventosAdministracion = [];
+$consultaEventosAdmin = $connection->prepare(
+    'SELECT ID_Evento, Nombre, Descripcion, Inicio, Fin, Latitud, Longitud,
+        Impacto_Porcentaje, Activo
+    FROM inventario_eventos_locales
+    WHERE Fin >= ?
+    ORDER BY Inicio
+    LIMIT 100'
+);
+$consultaEventosAdmin->bind_param('s', $inicioDiaSql);
+$consultaEventosAdmin->execute();
+$q = $consultaEventosAdmin->get_result();
+while ($evento = $q->fetch_assoc()) {
+    $evento['DistanciaKm'] = distanciaKm(
+        (float) $configuracionPronostico['Latitud'],
+        (float) $configuracionPronostico['Longitud'],
+        (float) $evento['Latitud'],
+        (float) $evento['Longitud']
+    );
+    $eventosAdministracion[] = $evento;
 }
 
-$demanda = [];
-foreach ($recetas as $receta) {
-    $ventasMismoDia = $ventas[(int) $receta['ID_Producto']] ?? 0;
-    $cantidad = (int) round($ventasMismoDia * (float) $receta['Cantidad'] * 1000 / 4);
-    $idInsumo = (int) $receta['ID_Insumo'];
-    $demanda[$idInsumo] = ($demanda[$idInsumo] ?? 0) + $cantidad;
-}
+$ajusteEventos = max(0.0, min(200.0, array_sum(array_map(
+    static function (array $evento): float {
+        return (float) $evento['Impacto_Porcentaje'];
+    },
+    $eventosCercanos
+))));
+$demanda = calcularDemandaInsumos(
+    $ventas,
+    $recetas,
+    $sensibilidades,
+    $configuracionPronostico,
+    $clima,
+    $ajusteEventos
+);
+$ajusteClimaFria = calcularAjusteClima('bebida_fria', $clima, $configuracionPronostico);
+$ajusteClimaCaliente = calcularAjusteClima('bebida_caliente', $clima, $configuracionPronostico);
+$actualizacionClimaLocal = !empty($clima['actualizado'])
+    ? new DateTimeImmutable($clima['actualizado'], $zonaHoraria)
+    : null;
+$connection->close();
 $stockBajo = 0;
 $caducanPronto = 0;
+$caducados = 0;
 $hoy = new DateTimeImmutable('today');
+$fechaHoy = $hoy->format('Y-m-d');
+$fechaLimiteCaducidad = $hoy->modify('+3 days')->format('Y-m-d');
 foreach ($insumos as $insumo) {
     if ((float) $insumo['Stock'] <= (float) $insumo['Stock_Minimo']) $stockBajo++;
     if ($insumo['Caducidad'] !== null) {
-        $caducidad = new DateTimeImmutable($insumo['Caducidad']);
-        if ($caducidad <= $hoy->modify('+3 days')) $caducanPronto++;
+        if ($insumo['Caducidad'] < $fechaHoy) {
+            $caducados++;
+        } elseif ($insumo['Caducidad'] <= $fechaLimiteCaducidad) {
+            $caducanPronto++;
+        }
     }
 }
 function h($value)
@@ -69,7 +159,7 @@ function h($value)
     <title>Inventario y producción · Caféliz</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="IMG/cafeliz-pwa-192-v2.png">
-    <link rel="stylesheet" href="CSS/inventario.css">
+    <link rel="stylesheet" href="CSS/inventario.css?v=2">
 </head>
 <body class="admin-page inventario-page" data-offline-view="true">
     <?php include 'includes/navbar.php'; ?>
@@ -78,56 +168,192 @@ function h($value)
             <div>
                 <span>BACKOFFICE · CONTROL DE INSUMOS</span>
                 <h1>Inventario y hoja de producción</h1>
-                <p>Pronóstico de hoy según las cuatro semanas previas del mismo día de la semana.</p>
+                <p>Existencias, alertas y producción para hoy.</p>
             </div>
-            <a href="listPedidos.php" class="inventario-link">Ver pedidos <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+            <a href="listPedidos.php" class="inventario-link">Pedidos <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
         </header>
         <?php if (($_GET['resultado'] ?? '') === 'ok'): ?>
             <div class="inventario-status" role="status">Inventario actualizado correctamente.</div>
         <?php endif; ?>
         <section class="inventario-resumen" aria-label="Resumen de inventario">
             <article><span>Insumos registrados</span><strong><?php echo count($insumos); ?></strong></article>
-            <article><span>En mínimo o por debajo</span><strong><?php echo $stockBajo; ?></strong></article>
-            <article><span>Caducan en 3 días o menos</span><strong><?php echo $caducanPronto; ?></strong></article>
+            <article class="<?php echo $stockBajo ? 'inventario-resumen-alerta' : 'inventario-resumen-ok'; ?>"><span>En mínimo o por debajo</span><strong><?php echo $stockBajo; ?></strong><small><?php echo $stockBajo ? 'Revisar existencias' : 'Todo en nivel'; ?></small></article>
+            <article class="<?php echo $caducanPronto ? 'inventario-resumen-alerta' : 'inventario-resumen-ok'; ?>"><span>Caducan en los próximos 3 días</span><strong><?php echo $caducanPronto; ?></strong><small><?php echo $caducanPronto ? 'Priorizar su uso' : 'Sin caducidades próximas'; ?></small></article>
+            <article class="<?php echo $caducados ? 'inventario-resumen-alerta' : 'inventario-resumen-ok'; ?>"><span>Caducados</span><strong><?php echo $caducados; ?></strong><small><?php echo $caducados ? 'Retirar y revisar' : 'Sin productos vencidos'; ?></small></article>
         </section>
-        <section class="inventario-panel">
+        <nav class="inventario-accesos" aria-label="Accesos rápidos">
+            <a href="#produccion">Producción</a>
+            <a href="#contexto">Clima y eventos</a>
+            <a href="#catalogo">Insumos y recetas</a>
+            <a href="#movimientos">Registrar movimiento</a>
+            <a href="#historial">Historial</a>
+        </nav>
+        <section id="contexto" class="inventario-panel inventario-contexto">
             <div class="inventario-panel-heading">
-                <div><span class="inventario-eyebrow">PRODUCCIÓN DE HOY</span><h2>Hoja sugerida</h2></div>
-                <p>Venta promedio del mismo día durante las últimas cuatro semanas. Completa las recetas para generar previsiones.</p>
+                <div><span class="inventario-eyebrow">PRONÓSTICO</span><h2>Clima y eventos</h2></div>
+                <a class="inventario-clima-fuente" href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo ↗</a>
+            </div>
+            <?php if (!empty($clima['disponible'])): ?>
+                <div class="inventario-clima-resumen">
+                    <strong><?php echo h($clima['descripcion']); ?></strong>
+                    <span>Máxima prevista: <?php echo number_format($clima['temperatura_maxima'], 1); ?> °C</span>
+                    <span>Lluvia <?php echo (int) $clima['probabilidad_precipitacion']; ?>%</span>
+                    <span><?php echo number_format($clima['precipitacion_mm'], 1); ?> mm</span>
+                    <small><?php echo h($actualizacionClimaLocal->format('H:i')); ?></small>
+                </div>
+                <?php if (!empty($clima['obsoleto'])): ?>
+                    <p class="inventario-aviso" role="status"><?php echo h($clima['mensaje']); ?></p>
+                <?php endif; ?>
+            <?php else: ?>
+                <p class="inventario-aviso" role="status"><?php echo h($clima['mensaje']); ?></p>
+            <?php endif; ?>
+            <p class="inventario-context-note">
+                Frías <?php echo $ajusteClimaFria > 0 ? '+' . number_format($ajusteClimaFria, 0) . '%' : '—'; ?> ·
+                Calientes <?php echo $ajusteClimaCaliente > 0 ? '+' . number_format($ajusteClimaCaliente, 0) . '%' : '—'; ?> ·
+                Eventos +<?php echo number_format($ajusteEventos, 1); ?>%
+            </p>
+            <p class="inventario-context-caption">Estimación orientativa, no entrenada con históricos.</p>
+            <details class="inventario-detalles">
+                <summary>Ajustar ubicación y reglas</summary>
+                <p class="inventario-help">Referencia: Tulancingo, Hidalgo · radio de eventos: 2 km. La lluvia no modifica la demanda.</p>
+                <form action="PHP/FuncionesInventario.php" method="post" class="inventario-form inventario-config-form">
+                <input type="hidden" name="accion" value="configurar_pronostico">
+                <label>Latitud del café<input name="latitud" type="number" min="-90" max="90" step="0.000001" value="<?php echo h($configuracionPronostico['Latitud']); ?>" required></label>
+                <label>Longitud del café<input name="longitud" type="number" min="-180" max="180" step="0.000001" value="<?php echo h($configuracionPronostico['Longitud']); ?>" required></label>
+                <label>Máxima para bebidas frías (°C)<input name="umbral_fria" type="number" min="-30" max="60" step="0.1" value="<?php echo h($configuracionPronostico['Umbral_Bebida_Fria']); ?>" required></label>
+                <label>Aumento para bebidas frías (%)<input name="ajuste_fria" type="number" min="0" max="100" step="1" value="<?php echo h($configuracionPronostico['Ajuste_Bebida_Fria']); ?>" required></label>
+                <label>Máxima para bebidas calientes (°C)<input name="umbral_caliente" type="number" min="-30" max="60" step="0.1" value="<?php echo h($configuracionPronostico['Umbral_Bebida_Caliente']); ?>" required></label>
+                <label>Aumento para bebidas calientes (%)<input name="ajuste_caliente" type="number" min="0" max="100" step="1" value="<?php echo h($configuracionPronostico['Ajuste_Bebida_Caliente']); ?>" required></label>
+                <button type="submit">Guardar reglas y ubicación</button>
+                </form>
+            </details>
+            <div class="inventario-eventos-heading">
+                <h3>Eventos de hoy <span class="inventario-count"><?php echo count($eventosCercanos); ?></span></h3>
+            </div>
+            <?php if ($eventosCercanos): ?>
+                <ul class="inventario-eventos-hoy">
+                    <?php foreach ($eventosCercanos as $evento):
+                        $inicioEventoLocal = new DateTimeImmutable($evento['Inicio'], $zonaHoraria);
+                        $finEventoLocal = new DateTimeImmutable($evento['Fin'], $zonaHoraria);
+                    ?>
+                        <li><strong><?php echo h($evento['Nombre']); ?></strong>
+                            <span><?php echo h($inicioEventoLocal->format('H:i')); ?>–<?php echo h($finEventoLocal->format('H:i')); ?> ·
+                                <?php echo number_format($evento['DistanciaKm'], 2); ?> km · +<?php echo number_format((float) $evento['Impacto_Porcentaje'], 1); ?>%</span>
+                            <?php if ($evento['Descripcion'] !== ''): ?><small><?php echo h($evento['Descripcion']); ?></small><?php endif; ?>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php else: ?>
+                <p class="inventario-empty">Sin eventos dentro de 2 km.</p>
+            <?php endif; ?>
+            <details class="inventario-detalles">
+                <summary>Administrar eventos</summary>
+                <p class="inventario-help">Agrega un evento cercano; su impacto es una estimación manual.</p>
+                <form action="PHP/FuncionesInventario.php" method="post" class="inventario-form inventario-evento-form">
+                <input type="hidden" name="accion" value="crear_evento_local">
+                <label>Nombre del evento<input name="nombre_evento" maxlength="120" required></label>
+                <label>Descripción opcional<input name="descripcion_evento" maxlength="255"></label>
+                <label>Inicio<input name="inicio_evento" type="datetime-local" value="<?php echo h($inicioDia->format('Y-m-d')); ?>T16:00" required></label>
+                <label>Fin<input name="fin_evento" type="datetime-local" value="<?php echo h($inicioDia->format('Y-m-d')); ?>T18:00" required></label>
+                <label>Latitud del evento<input name="latitud_evento" type="number" min="-90" max="90" step="0.000001" value="<?php echo h($configuracionPronostico['Latitud']); ?>" required></label>
+                <label>Longitud del evento<input name="longitud_evento" type="number" min="-180" max="180" step="0.000001" value="<?php echo h($configuracionPronostico['Longitud']); ?>" required></label>
+                <label>Impacto estimado (%)<input name="impacto_evento" type="number" min="0" max="200" step="1" value="0" required></label>
+                <button type="submit">Agregar evento</button>
+                </form>
+            <?php if ($eventosAdministracion): ?>
+                <div class="table-responsive">
+                    <table class="table inventario-table inventario-eventos-tabla">
+                        <thead><tr><th>Evento</th><th>Fecha</th><th>Distancia</th><th>Impacto</th><th>Estado</th><th>Acción</th></tr></thead>
+                        <tbody><?php foreach ($eventosAdministracion as $evento):
+                            $inicioEventoLocal = new DateTimeImmutable($evento['Inicio'], $zonaHoraria);
+                        ?>
+                            <tr>
+                                <th scope="row"><?php echo h($evento['Nombre']); ?><small><?php echo h($evento['Descripcion']); ?></small></th>
+                                <td><?php echo h($inicioEventoLocal->format('d/m/Y H:i')); ?></td>
+                                <td><?php echo number_format($evento['DistanciaKm'], 2); ?> km<?php echo $evento['DistanciaKm'] > 2 ? ' · fuera del radio' : ''; ?></td>
+                                <td>+<?php echo number_format((float) $evento['Impacto_Porcentaje'], 1); ?>%</td>
+                                <td><?php echo (int) $evento['Activo'] === 1 ? 'Activo' : 'Pausado'; ?></td>
+                                <td><form action="PHP/FuncionesInventario.php" method="post">
+                                    <input type="hidden" name="accion" value="alternar_evento_local">
+                                    <input type="hidden" name="id_evento" value="<?php echo (int) $evento['ID_Evento']; ?>">
+                                    <button type="submit"><?php echo (int) $evento['Activo'] === 1 ? 'Pausar' : 'Activar'; ?></button>
+                                </form></td>
+                            </tr>
+                        <?php endforeach; ?></tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+            </details>
+        </section>
+        <section id="produccion" class="inventario-panel">
+            <div class="inventario-panel-heading">
+                <div><span class="inventario-eyebrow">PRODUCCIÓN</span><h2>Hoja sugerida</h2></div>
+                <p>Basada en las últimas cuatro semanas.</p>
             </div>
             <?php if (!$insumos): ?>
                 <p class="inventario-empty">Registra insumos para ver existencias y recomendaciones de producción.</p>
             <?php else: ?>
+                <div class="inventario-filtros" data-inventario-filtros>
+                    <label>Buscar insumo<input type="search" data-inventario-busqueda placeholder="Ej. leche, café..." autocomplete="off"></label>
+                    <label>Mostrar<select data-inventario-estado>
+                        <option value="todos">Todos los insumos</option>
+                        <option value="bajo">Stock bajo</option>
+                        <option value="proximo">Caducidad próxima</option>
+                        <option value="caducado">Caducados</option>
+                    </select></label>
+                    <button type="button" class="inventario-limpiar" data-inventario-limpiar>Limpiar filtros</button>
+                    <p data-inventario-conteo role="status" aria-live="polite"></p>
+                </div>
                 <div class="table-responsive">
                     <table class="table inventario-table">
-                        <thead><tr><th>Insumo</th><th>Existencia</th><th>Mínimo</th><th>Demanda estimada</th><th>Sugerencia de reposición</th><th>Caducidad</th></tr></thead>
+                        <thead><tr><th>Insumo</th><th>Stock</th><th>Mínimo</th><th>Demanda base</th><th>Ajuste</th><th>Demanda final</th><th>Reponer</th><th>Caducidad</th></tr></thead>
                         <tbody>
                         <?php foreach ($insumos as $insumo):
                             $id = (int) $insumo['ID_Insumo'];
                             $stockMills = (int) round((float) $insumo['Stock'] * 1000);
                             $minimoMills = (int) round((float) $insumo['Stock_Minimo'] * 1000);
-                            $demandaMills = $demanda[$id] ?? 0;
+                            $demandaBaseMills = (int) round(($demanda[$id]['base'] ?? 0) * 1000);
+                            $demandaMills = (int) round(($demanda[$id]['ajustada'] ?? 0) * 1000);
+                            $ajustePorcentaje = $demanda[$id]['porcentaje'] ?? 0;
                             $pedidoMills = max(0, $demandaMills + $minimoMills - $stockMills);
                             $caducidad = $insumo['Caducidad'] ?? '';
-                            $porCaducar = $caducidad !== '' && $caducidad <= $hoy->modify('+3 days')->format('Y-m-d');
+                            $estadoStock = $stockMills <= $minimoMills ? 'bajo' : 'ok';
+                            $estadoCaducidad = $caducidad === '' ? 'ninguna'
+                                : ($caducidad < $fechaHoy ? 'caducado'
+                                    : ($caducidad <= $fechaLimiteCaducidad ? 'proximo' : 'ok'));
+                            $porcentajeStock = $minimoMills > 0
+                                ? min(100, (int) round($stockMills * 100 / $minimoMills))
+                                : ($stockMills > 0 ? 100 : 0);
                         ?>
-                            <tr>
+                            <tr data-inventario-fila data-stock="<?php echo $estadoStock; ?>" data-caducidad="<?php echo $estadoCaducidad; ?>">
                                 <th scope="row"><?php echo h($insumo['Nombre']); ?><small><?php echo h($insumo['Unidad']); ?></small></th>
-                                <td><?php echo number_format((float) $insumo['Stock'], 3); ?></td>
+                                <td>
+                                    <strong class="<?php echo $estadoStock === 'bajo' ? 'inventario-alerta' : 'inventario-ok'; ?>"><?php echo number_format((float) $insumo['Stock'], 3); ?> <?php echo h($insumo['Unidad']); ?></strong>
+                                    <div class="inventario-nivel" role="progressbar" aria-label="Existencia de <?php echo h($insumo['Nombre']); ?> comparada con el mínimo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?php echo $porcentajeStock; ?>">
+                                        <span class="<?php echo $estadoStock === 'bajo' ? 'inventario-nivel-bajo' : ''; ?>" style="width: <?php echo $porcentajeStock; ?>%"></span>
+                                    </div>
+                                    <small class="inventario-nivel-texto"><?php echo $estadoStock === 'bajo' ? 'Por debajo del mínimo' : 'Sobre el mínimo'; ?></small>
+                                </td>
                                 <td><?php echo number_format((float) $insumo['Stock_Minimo'], 3); ?></td>
-                                <td><?php echo number_format($demandaMills / 1000, 3); ?></td>
+                                <td><?php echo number_format($demandaBaseMills / 1000, 3) . ' ' . h($insumo['Unidad']); ?></td>
+                                <td><?php echo $ajustePorcentaje > 0 ? '+' . number_format($ajustePorcentaje, 1) . '%' : 'Sin ajuste'; ?></td>
+                                <td><?php echo number_format($demandaMills / 1000, 3) . ' ' . h($insumo['Unidad']); ?></td>
                                 <td><strong class="<?php echo $pedidoMills > 0 ? 'inventario-alerta' : 'inventario-ok'; ?>">
                                     <?php echo number_format($pedidoMills / 1000, 3) . ' ' . h($insumo['Unidad']); ?>
                                 </strong></td>
-                                <td><?php if ($caducidad !== ''): ?><span class="<?php echo $porCaducar ? 'inventario-alerta' : ''; ?>"><?php echo h($caducidad); ?></span><?php else: ?>—<?php endif; ?></td>
+                                <td><?php if ($caducidad !== ''): ?>
+                                    <span class="<?php echo $estadoCaducidad === 'ok' ? 'inventario-ok' : 'inventario-alerta'; ?>"><?php echo h($caducidad); ?></span>
+                                    <small class="inventario-caducidad-estado"><?php echo $estadoCaducidad === 'caducado' ? 'Caducado' : ($estadoCaducidad === 'proximo' ? 'Próxima' : 'Vigente'); ?></small>
+                                <?php else: ?>—<?php endif; ?></td>
                             </tr>
                         <?php endforeach; ?>
+                        <tr data-inventario-sin-resultados hidden><td colspan="8">No hay insumos que coincidan con estos filtros.</td></tr>
                         </tbody>
                     </table>
                 </div>
             <?php endif; ?>
         </section>
-        <div class="inventario-columns">
+        <div id="catalogo" class="inventario-columns">
             <section class="inventario-panel">
                 <div class="inventario-panel-heading"><div><span class="inventario-eyebrow">CATÁLOGO</span><h2>Registrar insumo</h2></div></div>
                 <form action="PHP/FuncionesInventario.php" method="post" class="inventario-form">
@@ -161,8 +387,29 @@ function h($value)
                 <?php endif; ?>
             </section>
         </div>
-        <section class="inventario-panel">
-            <div class="inventario-panel-heading"><div><span class="inventario-eyebrow">MOVIMIENTOS</span><h2>Entradas y mermas</h2></div></div>
+        <section class="inventario-panel inventario-productos-clima">
+            <details class="inventario-detalles">
+                <summary>Elegir qué productos responden al clima</summary>
+                <p class="inventario-help">Solo las bebidas frías o calientes reciben ajuste.</p>
+            <div class="inventario-sensibilidades">
+                <?php foreach ($productos as $producto): ?>
+                    <form action="PHP/FuncionesInventario.php" method="post" class="inventario-sensibilidad-form">
+                        <input type="hidden" name="accion" value="sensibilidad_clima">
+                        <input type="hidden" name="id_producto" value="<?php echo (int) $producto['id']; ?>">
+                        <strong><?php echo h($producto['Product_Nombre']); ?></strong>
+                        <label>Sensibilidad<select name="sensibilidad">
+                            <option value="neutra" <?php echo ($sensibilidades[(int) $producto['id']] ?? 'neutra') === 'neutra' ? 'selected' : ''; ?>>Neutra</option>
+                            <option value="bebida_fria" <?php echo ($sensibilidades[(int) $producto['id']] ?? 'neutra') === 'bebida_fria' ? 'selected' : ''; ?>>Bebida fría</option>
+                            <option value="bebida_caliente" <?php echo ($sensibilidades[(int) $producto['id']] ?? 'neutra') === 'bebida_caliente' ? 'selected' : ''; ?>>Bebida caliente</option>
+                        </select></label>
+                        <button type="submit">Guardar</button>
+                    </form>
+                <?php endforeach; ?>
+            </div>
+            </details>
+        </section>
+        <section id="movimientos" class="inventario-panel">
+            <div class="inventario-panel-heading"><div><span class="inventario-eyebrow">MOVIMIENTOS</span><h2>Registrar entradas y mermas</h2></div></div>
             <?php if (!$insumos): ?><p class="inventario-empty">Primero registra los insumos.</p><?php else: ?>
                 <div class="movimientos-grid">
                     <?php foreach ($insumos as $insumo): ?>
@@ -182,6 +429,53 @@ function h($value)
                 </div>
             <?php endif; ?>
         </section>
+        <section id="historial" class="inventario-panel">
+            <div class="inventario-panel-heading">
+                <div><span class="inventario-eyebrow">TRAZABILIDAD</span><h2>Historial de movimientos</h2></div>
+                <p>Consulta las últimas 50 entradas, mermas y salidas por pedido.</p>
+            </div>
+            <?php if (!$movimientos): ?>
+                <p class="inventario-empty">Aún no hay movimientos registrados. Las entradas, mermas y consumos aparecerán aquí.</p>
+            <?php else: ?>
+                <div class="inventario-filtros inventario-filtros-historial">
+                    <label>Buscar por insumo o nota<input type="search" data-movimientos-busqueda placeholder="Ej. leche, recepción..." autocomplete="off"></label>
+                    <label>Tipo de movimiento<select data-movimientos-tipo>
+                        <option value="todos">Todos</option>
+                        <option value="inicial">Stock inicial</option>
+                        <option value="entrada">Entradas</option>
+                        <option value="merma">Mermas</option>
+                        <option value="consumo">Consumos por pedido</option>
+                    </select></label>
+                    <p data-movimientos-conteo role="status" aria-live="polite"></p>
+                </div>
+                <div class="table-responsive">
+                    <table class="table inventario-table inventario-historial">
+                        <thead><tr><th>Fecha</th><th>Insumo</th><th>Movimiento</th><th>Cantidad</th><th>Stock anterior</th><th>Stock nuevo</th><th>Detalle</th></tr></thead>
+                        <tbody>
+                        <?php $tiposMovimiento = [
+                            'inicial' => 'Stock inicial',
+                            'entrada' => 'Entrada',
+                            'merma' => 'Merma',
+                            'consumo' => 'Consumo por pedido'
+                        ]; ?>
+                        <?php foreach ($movimientos as $movimiento):
+                        ?>
+                            <tr data-movimiento-fila data-tipo="<?php echo h($movimiento['Tipo']); ?>">
+                                <td><?php echo h(date('d/m/Y H:i', strtotime($movimiento['Creado']))); ?></td>
+                                <th scope="row"><?php echo h($movimiento['Nombre']); ?><small><?php echo h($movimiento['Unidad']); ?></small></th>
+                                <td><span class="inventario-movimiento inventario-movimiento-<?php echo h($movimiento['Tipo']); ?>"><?php echo h($tiposMovimiento[$movimiento['Tipo']]); ?></span></td>
+                                <td><?php echo number_format((float) $movimiento['Cantidad'], 3) . ' ' . h($movimiento['Unidad']); ?></td>
+                                <td><?php echo number_format((float) $movimiento['Stock_Anterior'], 3); ?></td>
+                                <td><?php echo number_format((float) $movimiento['Stock_Nuevo'], 3); ?></td>
+                                <td><?php echo h($movimiento['Nota'] !== '' ? $movimiento['Nota'] : ($movimiento['ID_Orden'] ? 'Pedido #' . $movimiento['ID_Orden'] : '—')); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        <tr data-movimientos-sin-resultados hidden><td colspan="7">No hay movimientos que coincidan con estos filtros.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </section>
         <section class="inventario-panel">
             <div class="inventario-panel-heading"><div><span class="inventario-eyebrow">RECETARIO CONFIGURADO</span><h2>Consumos automáticos</h2></div></div>
             <?php if (!$recetas): ?><p class="inventario-empty">Todavía no hay recetas configuradas.</p><?php else: ?>
@@ -198,6 +492,6 @@ function h($value)
         <p class="inventario-disclaimer">La previsión es una referencia estadística, no una recomendación automática de compra. Configura las recetas con las cantidades reales del negocio. No se conectan APIs de clima/eventos ni se envían órdenes a proveedores.</p>
     </main>
     <?php include 'includes/footer.html'; ?>
-    <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="JS/inventario.js" defer></script>
 </body>
 </html>

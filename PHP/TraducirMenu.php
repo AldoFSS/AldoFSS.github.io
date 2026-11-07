@@ -44,6 +44,61 @@ try {
         throw new RuntimeException('La traducción guardada no tiene un formato válido.');
     }
 
+    $etiquetasCupon = [
+        'es' => [
+            'greenCouponTitle' => 'Recompensa Huella verde',
+            'greenCouponHelp' => 'Usa un cupón vigente para liberar una bebida incluida en tu pedido.',
+            'greenCouponLabel' => 'Cupón disponible',
+            'greenCouponNone' => 'No usar cupón',
+            'greenCouponChooseProduct' => 'Selecciona una bebida de tu pedido',
+            'greenCouponEmpty' => 'No tienes cupones vigentes. Completa ocho vasos reutilizables para obtener uno.',
+            'greenCouponAddDrink' => 'Agrega una bebida al pedido para usar este cupón.',
+            'greenCouponSavings' => 'Descuento estimado: ${discount}. Se verificará al registrar el pedido.',
+            'greenCouponChooseDrink' => 'Elige qué bebida de tu pedido quieres recibir gratis.',
+            'greenCouponChooseDrinkTitle' => 'Elige una bebida',
+            'greenCouponLoading' => 'Buscando cupones vigentes…',
+            'greenCouponOption' => 'Bebida gratis · vence {date}',
+            'greenCouponContinue' => 'Puedes continuar sin cupón.',
+            'greenCouponProductLabel' => 'Bebida que deseas recibir gratis',
+            'greenCouponApplied' => 'Cupón aplicado: ahorraste ${discount}.'
+        ],
+        'en' => [
+            'greenCouponTitle' => 'Green footprint reward',
+            'greenCouponHelp' => 'Use an active coupon to get one drink in your order for free.',
+            'greenCouponLabel' => 'Available coupon',
+            'greenCouponNone' => 'Do not use a coupon',
+            'greenCouponChooseProduct' => 'Choose a drink from your order',
+            'greenCouponEmpty' => 'You have no active coupons. Reuse eight cups to earn one.',
+            'greenCouponAddDrink' => 'Add a drink to your order to use this coupon.',
+            'greenCouponSavings' => 'Estimated discount: ${discount}. It will be verified when you place the order.',
+            'greenCouponChooseDrink' => 'Choose which drink in your order you want for free.',
+            'greenCouponChooseDrinkTitle' => 'Choose a drink',
+            'greenCouponLoading' => 'Checking active coupons…',
+            'greenCouponOption' => 'Free drink · expires {date}',
+            'greenCouponContinue' => 'You can continue without a coupon.',
+            'greenCouponProductLabel' => 'Drink you want for free',
+            'greenCouponApplied' => 'Coupon applied: you saved ${discount}.'
+        ],
+        'fr' => [
+            'greenCouponTitle' => 'Récompense empreinte verte',
+            'greenCouponHelp' => 'Utilisez un coupon valide pour obtenir gratuitement une boisson de votre commande.',
+            'greenCouponLabel' => 'Coupon disponible',
+            'greenCouponNone' => 'Ne pas utiliser de coupon',
+            'greenCouponChooseProduct' => 'Choisissez une boisson de votre commande',
+            'greenCouponEmpty' => 'Vous n’avez aucun coupon valide. Réutilisez huit tasses pour en obtenir un.',
+            'greenCouponAddDrink' => 'Ajoutez une boisson à votre commande pour utiliser ce coupon.',
+            'greenCouponSavings' => 'Remise estimée : ${discount}. Elle sera vérifiée lors de la commande.',
+            'greenCouponChooseDrink' => 'Choisissez la boisson de votre commande que vous souhaitez gratuitement.',
+            'greenCouponChooseDrinkTitle' => 'Choisissez une boisson',
+            'greenCouponLoading' => 'Recherche des coupons valides…',
+            'greenCouponOption' => 'Boisson gratuite · expire le {date}',
+            'greenCouponContinue' => 'Vous pouvez continuer sans coupon.',
+            'greenCouponProductLabel' => 'Boisson que vous souhaitez gratuitement',
+            'greenCouponApplied' => 'Coupon appliqué : vous avez économisé ${discount}.'
+        ]
+    ];
+    $traduccion['ui'] = array_merge($traduccion['ui'], $etiquetasCupon[$idioma]);
+
     if ($idioma === 'es') {
         $categorias = $connection->query('SELECT ID_Cat, Categoria FROM menucategoria ORDER BY ID_Cat');
         while ($categoria = $categorias->fetch_assoc()) {
