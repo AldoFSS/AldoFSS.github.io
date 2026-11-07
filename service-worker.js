@@ -1,7 +1,6 @@
-const CACHE_NAME = "cafeliz-pwa-v45";
+const CACHE_NAME = "cafeliz-pwa-v50";
 const CACHE_PREFIX = "cafeliz-pwa-";
 const APP_SHELL = [
-  "./offline.html",
   "./manifest.webmanifest",
   "./CSS/admin.css?v=6",
   "./CSS/estilos.css?v=2",
@@ -12,7 +11,7 @@ const APP_SHELL = [
   "./CSS/menu-cart.css?v=5",
   "./CSS/pwa.css",
   "./CSS/reservas.css?v=14",
-  "./CSS/verde.css",
+  "./CSS/verde.css?v=3",
   "./JS/ValidarUser.js",
   "./JS/inventario.js",
   "./JS/main.js?v=3",
@@ -86,7 +85,13 @@ const PUBLIC_OFFLINE_PAGES = [
   new URL("./registro.php", self.registration.scope),
   new URL("./reservas.php", self.registration.scope)
 ];
-const OFFLINE_PAGE = new URL("./offline.html", self.registration.scope).href;
+const ROUTE_OFFLINE_VIEWS = [
+  new URL("./menu.php", self.registration.scope),
+  new URL("./reservas.php", self.registration.scope),
+  new URL("./listInventario.php", self.registration.scope),
+  new URL("./verde.php", self.registration.scope)
+];
+const OFFLINE_VIEW_QUERY = "pwa_offline=1";
 const STATIC_ASSET_PATTERN = /\.(?:css|js|png|jpe?g|webp|gif|svg|ico|woff2?|ttf|webmanifest)$/i;
 
 function publicPageFor(url) {
@@ -132,13 +137,7 @@ async function precacheAppShell() {
     const request = new Request(new URL(path, self.registration.scope), { cache: "reload" });
     const response = await fetch(request);
     const url = new URL(request.url);
-    const isOfflinePage = url.pathname.toLowerCase().endsWith("/offline.html");
-    const validResponse = isOfflinePage
-      ? cacheableResponse(response) &&
-        (response.headers.get("Content-Type") || "").toLowerCase().includes("text/html")
-      : cacheableStaticResponse(response, url);
-
-    if (!validResponse) {
+    if (!cacheableStaticResponse(response, url)) {
       throw new Error(
         `No se puede precargar ${url.pathname}: HTTP ${response.status}, ` +
         `Content-Type ${response.headers.get("Content-Type") || "ausente"}.`
@@ -147,12 +146,38 @@ async function precacheAppShell() {
 
     await cache.put(request, response);
   }));
+
+  await Promise.all(ROUTE_OFFLINE_VIEWS.map(async (route) => {
+    const template = new URL(route);
+    template.search = OFFLINE_VIEW_QUERY;
+    const request = new Request(template, { cache: "reload" });
+    const response = await fetch(request);
+    const contentType = (response.headers.get("Content-Type") || "").toLowerCase();
+    if (!response.ok || response.type !== "basic" ||
+        !contentType.includes("text/html")) {
+      throw new Error(
+        `No se puede precargar la vista offline de ${route.pathname}: ` +
+        `HTTP ${response.status}, Content-Type ${contentType || "ausente"}.`
+      );
+    }
+    await cache.put(request, response);
+  }));
 }
 
 function cacheablePublicPage(response, url) {
   return !url.search &&
     response.headers.get("X-PWA-Cacheable") === "public" &&
     cacheableResponse(response);
+}
+
+function offlineViewFor(url) {
+  const route = ROUTE_OFFLINE_VIEWS.find((page) => page.pathname === url.pathname);
+  if (!route) {
+    return null;
+  }
+  const template = new URL(route);
+  template.search = OFFLINE_VIEW_QUERY;
+  return template.href;
 }
 
 async function showCachedPage(response) {
@@ -165,7 +190,7 @@ async function showCachedPage(response) {
     const markedAttributes = /\bdata-pwa-cached(?:\s|=|$)/i.test(attributes)
       ? attributes
       : `${attributes} data-pwa-cached="true"`;
-    return `<body${markedAttributes}><aside id="pwa-cache-notice" class="pwa-offline-banner" role="status" style="position:sticky;top:0;z-index:1000;padding:.85rem 1rem;background:#fff7df;color:#513b12;text-align:center;font-weight:600">Mostrando una copia guardada. Puede estar desactualizada; las operaciones que requieren conexión no se han realizado.</aside>`;
+    return `<body${markedAttributes}>`;
   });
   if (markedHtml === html) {
     return response;
@@ -291,13 +316,25 @@ self.addEventListener("fetch", (event) => {
               return showCachedPage(cachedPage);
             }
           }
+          if (response.status >= 500) {
+            const offlineView = offlineViewFor(requestUrl);
+            const cachedView = offlineView ? await cache.match(offlineView) : null;
+            if (cachedView) {
+              return showCachedPage(cachedView);
+            }
+          }
           return response;
         } catch {
           const cachedPage = page ? await cache.match(page) : null;
           if (cachedPage) {
             return showCachedPage(cachedPage);
           }
-          return await cache.match(OFFLINE_PAGE) || Response.error();
+          const offlineView = offlineViewFor(requestUrl);
+          const cachedView = offlineView ? await cache.match(offlineView) : null;
+          if (cachedView) {
+            return showCachedPage(cachedView);
+          }
+          return Response.error();
         }
       })()
     );

@@ -1,4 +1,36 @@
 <?php
+if (($_GET['pwa_offline'] ?? '') === '1') {
+    header('Content-Type: text/html; charset=utf-8');
+    header('Cache-Control: no-store');
+    ?>
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#FFFFFF">
+        <title>Menú · Caféliz</title>
+        <link rel="stylesheet" href="CSS/estilos.css?v=2">
+        <link rel="stylesheet" href="CSS/menu-cart.css?v=5">
+        <link rel="stylesheet" href="CSS/pwa.css">
+    </head>
+    <body class="menu-page" data-offline-page="true">
+        <main class="menu-box">
+            <div class="container">
+                <header class="menu-heading">
+                    <span class="menu-eyebrow">PREPARADO PARA TI</span>
+                    <h1>El menú de Caféliz</h1>
+                    <p>Este menú todavía no se ha guardado en este dispositivo. Conéctate una vez para guardar los productos disponibles.</p>
+                </header>
+            </div>
+        </main>
+        <script src="JS/offline-experience.js" defer></script>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
 require_once __DIR__ . '/PHP/seguridad.php';
 iniciarSesionSegura();
 header('Cache-Control: ' . (!empty($_SESSION['ID_Usuario']) ? 'no-store' : 'private, no-cache, must-revalidate'));

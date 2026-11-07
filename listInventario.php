@@ -1,4 +1,105 @@
 <?php
+if (($_GET['pwa_offline'] ?? '') === '1') {
+    header('Content-Type: text/html; charset=utf-8');
+    header('Cache-Control: no-store');
+    ?>
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#FFFFFF">
+        <title>Inventario y producción · Caféliz</title>
+        <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="node_modules/bootstrap-icons/font/bootstrap-icons.min.css">
+        <link rel="stylesheet" href="CSS/estilos.css?v=2">
+        <link rel="stylesheet" href="CSS/admin.css?v=6">
+        <link rel="stylesheet" href="CSS/inventario.css?v=2">
+        <link rel="stylesheet" href="CSS/pwa.css">
+    </head>
+    <body class="admin-page inventario-page" data-offline-page="true">
+        <nav class="offline-module-nav" aria-label="Navegación">
+            <a href="./index.php">CAFELIZ</a>
+            <span>Modo sin conexión</span>
+        </nav>
+        <main class="inventario-main">
+            <header class="inventario-heading">
+                <div>
+                    <span>BACKOFFICE · CONTROL DE INSUMOS</span>
+                    <h1>Inventario y hoja de producción</h1>
+                    <p>Existencias, alertas y producción para hoy.</p>
+                </div>
+                <span class="inventario-link" aria-disabled="true">Pedidos <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+            </header>
+            <p class="pwa-offline-banner" role="status">Vista sin conexión: las existencias y movimientos no se guardan en este dispositivo.</p>
+            <section class="inventario-resumen" aria-label="Resumen de inventario">
+                <article><span>Insumos registrados</span><strong>—</strong><small>Requiere conexión</small></article>
+                <article><span>En mínimo o por debajo</span><strong>—</strong><small>Requiere conexión</small></article>
+                <article><span>Caducan en los próximos 3 días</span><strong>—</strong><small>Requiere conexión</small></article>
+                <article><span>Caducados</span><strong>—</strong><small>Requiere conexión</small></article>
+            </section>
+            <nav class="inventario-accesos" aria-label="Accesos rápidos">
+                <a href="#produccion">Producción</a>
+                <a href="#contexto">Clima y eventos</a>
+                <a href="#catalogo">Insumos y recetas</a>
+                <a href="#movimientos">Registrar movimiento</a>
+                <a href="#historial">Historial</a>
+            </nav>
+            <section id="contexto" class="inventario-panel inventario-contexto">
+                <div class="inventario-panel-heading">
+                    <div><span class="inventario-eyebrow">PRONÓSTICO</span><h2>Clima y eventos</h2></div>
+                </div>
+                <p class="inventario-aviso" role="status">El pronóstico y los eventos se consultan al conectarte.</p>
+                <p class="inventario-context-caption">La previsión es una referencia estadística.</p>
+            </section>
+            <section id="produccion" class="inventario-panel">
+                <div class="inventario-panel-heading">
+                    <div><span class="inventario-eyebrow">PRODUCCIÓN</span><h2>Producción para hoy</h2></div>
+                </div>
+                <p class="inventario-empty">Las sugerencias de producción no están guardadas offline.</p>
+            </section>
+            <section id="catalogo" class="inventario-panel">
+                <div class="inventario-panel-heading">
+                    <div><span class="inventario-eyebrow">CATÁLOGO</span><h2>Insumos y recetas</h2></div>
+                </div>
+                <p class="inventario-empty">Las existencias, el catálogo y las recetas requieren conexión.</p>
+            </section>
+            <section id="movimientos" class="inventario-panel">
+                <div class="inventario-panel-heading">
+                    <div><span class="inventario-eyebrow">MOVIMIENTOS</span><h2>Registrar movimiento</h2></div>
+                </div>
+                <p class="inventario-empty">Los movimientos no se pueden registrar sin conexión.</p>
+                <div class="offline-module" data-offline-local="true" aria-labelledby="offline-inventario-title">
+                    <h2 id="offline-inventario-title">Nota local de inventario</h2>
+                    <p>Escribe un recordatorio para revisarlo al reconectar. No modifica existencias. Evita anotar datos sensibles.</p>
+                    <label for="nota-inventario">Nota para revisar después</label>
+                    <textarea id="nota-inventario" maxlength="1000" placeholder="Ej. Revisar existencia de leche de avena"></textarea>
+                    <button type="button" id="guardar-nota-inventario">Guardar nota local</button>
+                    <button type="button" class="secondary" id="borrar-nota-inventario">Borrar nota</button>
+                    <output id="estado-nota-inventario" role="status" aria-live="polite"></output>
+                </div>
+            </section>
+            <section id="historial" class="inventario-panel">
+                <div class="inventario-panel-heading">
+                    <div><span class="inventario-eyebrow">HISTORIAL</span><h2>Movimientos recientes</h2></div>
+                </div>
+                <p class="inventario-empty">El historial de movimientos requiere conexión.</p>
+            </section>
+            <section class="inventario-panel">
+                <div class="inventario-panel-heading">
+                    <div><span class="inventario-eyebrow">RECETARIO CONFIGURADO</span><h2>Consumos automáticos</h2></div>
+                </div>
+                <p class="inventario-empty">Las recetas se consultan al conectarte.</p>
+            </section>
+            <p class="inventario-disclaimer">No se registran cambios ni se sincroniza ningún movimiento automáticamente.</p>
+        </main>
+        <script src="JS/offline-experience.js" defer></script>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
 require_once __DIR__ . '/PHP/seguridad.php';
 exigirAdministrador();
 header('Cache-Control: no-store');

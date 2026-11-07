@@ -179,20 +179,28 @@ El service worker guarda el shell, hojas de estilo, scripts, fuentes, logos, ico
 productos de la app. Usa Cache First para recursos con versión en la URL y Stale While Revalidate
 para los recursos estáticos sin versión. Las navegaciones usan Network First. Se guardan únicamente
 las vistas públicas GET de `index.php`, `menu.php`, `login.php`, `registro.php` y `reservas.php`
-cuando se abren en línea sin iniciar sesión y sin parámetros; al abrir una variante del menú sin
-conexión se muestra la copia general. El contenido guardado indica que puede estar desactualizado.
+cuando se abren en línea sin iniciar sesión y sin parámetros; el service worker también precarga
+vistas seguras para menú, reservas, inventario y huella verde. Al recargar sin conexión, se muestra
+la copia segura de la misma ruta cuando está disponible. No hay una página offline genérica.
 Las vistas administrativas y personalizadas, así como datos de sesión, APIs y respuestas POST, no se
-guardan. Si una página no tiene una copia pública segura, se muestra la experiencia offline.
+guardan. Si una ruta no tiene una copia pública segura o una vista offline preparada, el navegador
+no puede mostrar la página del servidor sin conexión.
 Las traducciones recibidas se guardan localmente por idioma durante 30 días.
 
 Al abrir reservas sin conexión se ofrece guardar localmente fecha, hora, pase y accesibilidad como
-borrador. Una copia pública previa de reservas se muestra como solo lectura, con aviso de datos
-posiblemente desactualizados y el mismo borrador local. Al reconectar, el usuario debe consultar de
-nuevo la disponibilidad; el borrador no aparta una mesa. Las vistas de huella verde e inventario no guardan
-datos privados; si no hay una copia pública se muestran las instrucciones offline. En inventario solo
-se conserva una nota local, no existencias ni movimientos. QR, métricas, cupones, pedidos,
-traducciones no guardadas, disponibilidad, administración y respuestas POST requieren conexión y
-nunca se sincronizan automáticamente. Se respeta `Cache-Control: no-store`.
+borrador. Una copia pública previa de reservas se muestra como solo lectura; la disponibilidad, el
+plano de mesas y el checkout se ocultan al mostrar la copia guardada; al reconectar, se debe consultar
+de nuevo la disponibilidad. El borrador no aparta una mesa.
+
+Las rutas de inventario y huella verde cargan una vista offline segura del módulo, con las mismas
+secciones principales y estilos, pero sin existencias, datos personales, cupones ni códigos QR.
+En inventario solo se conserva una nota local, no existencias ni movimientos. Las copias guardadas
+del menú permiten consultar los productos, pero no agregar artículos ni enviar pedidos. Reservas
+mantiene la estructura de la página y, si había una copia pública previa, puede mostrar horarios y
+mesas guardados, que pueden estar desactualizados; las acciones de selección, pago y envío permanecen
+bloqueadas. QR, métricas personales, cupones, pedidos, traducciones no guardadas, disponibilidad
+actual, administración y respuestas POST requieren conexión y nunca se sincronizan automáticamente.
+Se respeta `Cache-Control: no-store`.
 
 ## Notificaciones push
 La implementación usa Web Push estándar con VAPID. Aplicar una vez

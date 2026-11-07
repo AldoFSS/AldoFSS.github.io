@@ -1,24 +1,62 @@
 (() => {
     const path = window.location.pathname.split('/').pop()?.toLowerCase() || '';
     const moduleByPage = {
+        'menu.php': 'menu',
         'reservas.php': 'reservas',
         'verde.php': 'verde',
         'verde-barra.php': 'verde',
         'listinventario.php': 'inventario'
     };
     const module = moduleByPage[path];
+    const savedView = document.body.dataset.offlinePage === 'true' ||
+        document.body.dataset.pwaCached === 'true';
+    if (savedView) {
+        document.body.classList.add('offline-read-only');
+        const localSection = document.querySelector('.offline-module[data-offline-local="true"]');
+
+        document.querySelectorAll('form').forEach(form => {
+            if (localSection?.contains(form)) return;
+            form.addEventListener('submit', event => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }, true);
+            form.querySelectorAll('button, input, select, textarea').forEach(control => {
+                control.disabled = true;
+            });
+        });
+
+        document.querySelectorAll('.agregar-carrito, #sales_cart').forEach(button => {
+            button.disabled = true;
+        });
+        document.addEventListener('click', event => {
+            if (event.target.closest('.agregar-carrito, #sales_cart')) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }
+        }, true);
+
+        if (path === 'reservas.php') {
+            document.querySelectorAll('.horario-opcion, .seleccionar-mesa').forEach(control => {
+                control.disabled = true;
+            });
+        }
+    }
+
     if (module) {
         const offlinePage = document.body.dataset.offlinePage === 'true';
         const updateOfflineModule = () => {
             const showModule = offlinePage || !navigator.onLine || document.body.dataset.pwaCached === 'true';
             document.querySelectorAll('.offline-module').forEach(section => {
-                section.hidden = section.id !== `offline-${module}` || !showModule;
+                if (section.id.startsWith('offline-')) {
+                    section.hidden = section.id !== `offline-${module}` || !showModule;
+                }
             });
         };
         updateOfflineModule();
         window.addEventListener('online', updateOfflineModule);
         window.addEventListener('offline', updateOfflineModule);
         const messages = {
+            menu: 'Estás viendo los productos guardados en este dispositivo. No puedes realizar pedidos sin conexión.',
             reservas: 'No se pudo consultar el servidor. Puedes guardar tus preferencias como borrador local; la disponibilidad no está confirmada.',
             verde: 'La billetera verde necesita conexión. Ningún QR, vaso o cupón se valida en modo offline.',
             inventario: 'El inventario administrativo no está disponible sin conexión; solo puedes conservar una nota local.'

@@ -1,4 +1,133 @@
 <?php
+if (($_GET['pwa_offline'] ?? '') === '1') {
+    header('Content-Type: text/html; charset=utf-8');
+    header('Cache-Control: no-store');
+    ?>
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#FFFFFF">
+        <title>Reserva tu espacio · Caféliz</title>
+        <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="node_modules/bootstrap-icons/font/bootstrap-icons.min.css">
+        <link rel="stylesheet" href="CSS/estilos.css?v=2">
+        <link rel="stylesheet" href="CSS/admin.css?v=6">
+        <link rel="stylesheet" href="CSS/reservas.css?v=14">
+        <link rel="stylesheet" href="CSS/pwa.css">
+    </head>
+    <body class="reservas-page" data-offline-page="true">
+        <nav class="offline-module-nav" aria-label="Navegación">
+            <a href="./index.php">CAFELIZ</a>
+            <span>Modo sin conexión</span>
+        </nav>
+        <main class="reservas-main">
+            <header class="reservas-heading">
+                <div class="reservas-intro">
+                    <span class="reservas-eyebrow">COWORKING EN CAFÉLIZ</span>
+                    <h1>Un buen café.<br>Un espacio para tus ideas.</h1>
+                    <p>Elige cuánto tiempo necesitas, consulta qué mesas están libres y prepara tu próxima sesión de estudio o trabajo.</p>
+                    <div class="reservas-beneficios" aria-label="Detalles del espacio">
+                        <span><i class="bi bi-clock" aria-hidden="true"></i> Pases de 3 o 6 horas</span>
+                        <span><i class="bi bi-calendar-check" aria-hidden="true"></i> Disponibilidad por horario</span>
+                    </div>
+                </div>
+                <figure class="reservas-hero-photo">
+                    <img src="IMG/f5.webp" alt="Bebida de Caféliz servida en una taza">
+                    <figcaption>
+                        <span><i class="bi bi-cup-hot" aria-hidden="true"></i> Un espacio para tus ideas</span>
+                        <strong>Café y algo rico para acompañar tu sesión.</strong>
+                    </figcaption>
+                </figure>
+            </header>
+            <p class="pwa-offline-banner" role="status">Estás viendo la página de reservas sin conexión. No se consulta ni confirma la disponibilidad; cualquier horario guardado puede estar desactualizado.</p>
+            <nav class="reserva-pasos" aria-label="Pasos para reservar">
+                <span class="paso-activo" aria-current="step"><b>1</b> Elige tu pase</span>
+                <span><b>2</b> Busca un horario</span>
+                <span><b>3</b> Escoge tu mesa</span>
+            </nav>
+            <section class="reserva-configuracion">
+                <fieldset class="pases-grid">
+                    <legend><span class="reservas-eyebrow">PASO 1</span><strong>¿Cuánto tiempo necesitas?</strong></legend>
+                    <label class="pase-card">
+                        <span class="pase-duracion"><i class="bi bi-clock" aria-hidden="true"></i> 3 HORAS</span>
+                        <strong class="pase-nombre">Coworking medio día</strong>
+                        <span class="pase-incluye">3 horas, una bebida de especialidad y repostería.</span>
+                        <span class="pase-precio">$220.00 <small>MXN</small></span>
+                    </label>
+                    <label class="pase-card">
+                        <span class="pase-duracion"><i class="bi bi-clock" aria-hidden="true"></i> 6 HORAS</span>
+                        <strong class="pase-nombre">Coworking día completo</strong>
+                        <span class="pase-incluye">6 horas, refill de café del día, un alimento salado y 10 impresiones.</span>
+                        <span class="pase-precio">$405.00 <small>MXN</small></span>
+                    </label>
+                </fieldset>
+                <section class="busqueda-reservas" aria-labelledby="horario-titulo">
+                    <div class="horario-intro">
+                        <span class="reservas-eyebrow">PASO 2</span>
+                        <h2 id="horario-titulo">Encuentra el mejor momento</h2>
+                        <p>La fecha y preferencias se pueden guardar en este dispositivo; la disponibilidad no.</p>
+                    </div>
+                    <section class="offline-module" id="offline-reservas" data-offline-local="true" aria-labelledby="offline-reservas-title">
+                        <h2 id="offline-reservas-title">Borrador de reserva sin conexión</h2>
+                        <p>Guarda tus preferencias. Este borrador no aparta una mesa ni confirma disponibilidad.</p>
+                        <form id="reserva-borrador">
+                            <label>Fecha<input name="fecha" type="date" required></label>
+                            <label>Hora de inicio<input name="hora" type="time" min="08:00" max="17:00" step="3600" value="09:00" required></label>
+                            <label>Pase<select name="paquete"><option value="medio_dia">Coworking medio día (3 horas)</option><option value="dia_completo">Coworking día completo (6 horas)</option></select></label>
+                            <label>Accesibilidad<select name="requisito"><option value="">Todas las mesas</option><option value="silla_ruedas">Espacio para silla de ruedas</option><option value="zurdo">Estación para persona zurda</option></select></label>
+                            <button type="submit">Guardar borrador en este dispositivo</button>
+                            <button type="button" class="secondary" id="borrar-reserva-borrador">Borrar borrador</button>
+                        </form>
+                        <output id="estado-reserva-borrador" role="status" aria-live="polite"></output>
+                        <a id="continuar-reserva-borrador" href="reservas.php" hidden>Revisar disponibilidad al reconectar</a>
+                    </section>
+                </section>
+                <fieldset class="horarios-disponibles" id="horarios-disponibles">
+                    <legend>Inicios disponibles</legend>
+                    <p class="horarios-ayuda">Los horarios libres se consultan en línea. No hay disponibilidad confirmada en esta copia.</p>
+                    <div class="horarios-opciones" aria-hidden="true">
+                        <?php foreach (['09:00', '11:00', '13:00', '15:00'] as $horaOffline): ?>
+                            <button type="button" class="horario-opcion" disabled>
+                                <span><?php echo $horaOffline; ?></span><small>Requiere conexión</small>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+                </fieldset>
+            </section>
+            <section class="plano-section" id="espacios-disponibles" aria-labelledby="plano-titulo">
+                <div class="plano-heading">
+                    <div>
+                        <span class="reservas-eyebrow">PASO 3 · ESPACIOS</span>
+                        <h2 id="plano-titulo">Elige dónde instalarte</h2>
+                    </div>
+                    <p>Explora la distribución conceptual. La disponibilidad requiere conexión.</p>
+                </div>
+                <p class="sin-espacios">Conéctate para consultar los espacios y confirmar cuál está libre.</p>
+                <div class="plano-cafeteria">
+                    <div class="plano-ventanales" aria-hidden="true"><span><i class="bi bi-sun"></i> Ventanales</span></div>
+                    <div class="plano-zonas-servicio" aria-hidden="true">
+                        <div class="plano-zona zona-preparacion"><i class="bi bi-egg-fried"></i><span>Preparación</span></div>
+                        <div class="plano-zona zona-caja"><i class="bi bi-cup-hot"></i><span>Barra · Caja</span></div>
+                        <div class="plano-zona zona-sanitario"><i class="bi bi-universal-access"></i><span>Sanitario accesible</span></div>
+                    </div>
+                    <div class="plano-mesas" aria-label="Plano conceptual; disponibilidad no consultada">
+                        <div class="plano-area-label"><span>Salón de coworking</span><span>Conéctate para consultar</span></div>
+                        <p class="plano-aclaracion">El estado de cada espacio no se guarda offline.</p>
+                    </div>
+                    <div class="plano-entrada" aria-hidden="true"><i class="bi bi-door-open"></i> Entrada</div>
+                </div>
+            </section>
+            <p class="reserva-nota"><i class="bi bi-info-circle" aria-hidden="true"></i> El borrador permanece en este dispositivo. No se crea ninguna reserva ni se envía información al servidor sin conexión.</p>
+        </main>
+        <script src="JS/offline-experience.js" defer></script>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
 require_once __DIR__ . '/PHP/seguridad.php';
 iniciarSesionSegura();
 if (empty($_SESSION['ID_Usuario']) && ($_SERVER['REQUEST_METHOD'] ?? '') === 'GET') {

@@ -1,9 +1,12 @@
 <?php
-require_once __DIR__ . '/PHP/seguridad.php';
-iniciarSesionSegura();
-if (empty($_SESSION['ID_Usuario'])) {
-    header('Location: login.php', true, 303);
-    exit;
+$offlineSnapshot = ($_GET['pwa_offline'] ?? '') === '1';
+if (!$offlineSnapshot) {
+    require_once __DIR__ . '/PHP/seguridad.php';
+    iniciarSesionSegura();
+    if (empty($_SESSION['ID_Usuario'])) {
+        header('Location: login.php', true, 303);
+        exit;
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -17,10 +20,22 @@ if (empty($_SESSION['ID_Usuario'])) {
     <title>Huella verde · Caféliz</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="IMG/cafeliz-pwa-192-v2.png">
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="node_modules/bootstrap-icons/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="CSS/estilos.css?v=2">
+    <link rel="stylesheet" href="CSS/admin.css?v=6">
     <link rel="stylesheet" href="CSS/verde.css?v=3">
+    <link rel="stylesheet" href="CSS/pwa.css">
 </head>
-<body class="verde-page" data-offline-view="true">
-    <?php include __DIR__ . '/includes/navbar.php'; ?>
+<body class="verde-page"<?php echo $offlineSnapshot ? ' data-offline-page="true"' : ' data-offline-view="true"'; ?>>
+    <?php if ($offlineSnapshot): ?>
+        <nav class="offline-module-nav" aria-label="Navegación">
+            <a href="./index.php">CAFELIZ</a>
+            <span>Modo sin conexión</span>
+        </nav>
+    <?php else: ?>
+        <?php include __DIR__ . '/includes/navbar.php'; ?>
+    <?php endif; ?>
     <main class="verde-main">
         <header class="verde-hero">
             <div>
@@ -35,11 +50,16 @@ if (empty($_SESSION['ID_Usuario'])) {
             <div>
                 <span class="verde-eyebrow">EN CAJA O BARRA</span>
                 <h2 id="qr-title">Genera tu pase reutilizable</h2>
-                <p>El código es de un solo uso y vence en cinco minutos. Muéstralo al barista después de pedir con tu termo.</p>
-                <button class="verde-button" id="generar-qr" type="button">Generar código temporal</button>
-                <p class="verde-status" id="qr-status" role="status" aria-live="polite" tabindex="-1"></p>
+                <?php if ($offlineSnapshot): ?>
+                    <p>El código temporal requiere conexión y no puede generarse sin validar con el servidor.</p>
+                    <p class="verde-status" role="status">Conéctate para generar un pase reutilizable.</p>
+                <?php else: ?>
+                    <p>El código es de un solo uso y vence en cinco minutos. Muéstralo al barista después de pedir con tu termo.</p>
+                    <button class="verde-button" id="generar-qr" type="button">Generar código temporal</button>
+                    <p class="verde-status" id="qr-status" role="status" aria-live="polite" tabindex="-1"></p>
+                <?php endif; ?>
             </div>
-            <div class="verde-code" id="qr-code" aria-label="Código QR temporal"></div>
+            <div class="verde-code" <?php echo $offlineSnapshot ? 'aria-hidden="true"' : 'id="qr-code" aria-label="Código QR temporal"'; ?>></div>
         </section>
 
         <section aria-labelledby="personal-title">
@@ -47,12 +67,16 @@ if (empty($_SESSION['ID_Usuario'])) {
                 <div><span class="verde-eyebrow">TU BILLETERA</span><h2 id="personal-title">Impacto acumulado</h2></div>
             </div>
             <div class="verde-metrics" id="metricas-personales" aria-live="polite">
-                <article><i class="bi bi-cup-hot-fill verde-metric-icon" aria-hidden="true"></i><span>Vasos evitados</span><strong>…</strong></article>
-                <article><i class="bi bi-cloud-check-fill verde-metric-icon" aria-hidden="true"></i><span>CO₂ no emitido</span><strong>…</strong></article>
-                <article><i class="bi bi-recycle verde-metric-icon" aria-hidden="true"></i><span>Residuos evitados</span><strong>…</strong></article>
-                <article><i class="bi bi-droplet-half verde-metric-icon" aria-hidden="true"></i><span>Agua ahorrada</span><strong>…</strong></article>
+                <article><i class="bi bi-cup-hot-fill verde-metric-icon" aria-hidden="true"></i><span>Vasos evitados</span><strong><?php echo $offlineSnapshot ? '—' : '…'; ?></strong></article>
+                <article><i class="bi bi-cloud-check-fill verde-metric-icon" aria-hidden="true"></i><span>CO₂ no emitido</span><strong><?php echo $offlineSnapshot ? '—' : '…'; ?></strong></article>
+                <article><i class="bi bi-recycle verde-metric-icon" aria-hidden="true"></i><span>Residuos evitados</span><strong><?php echo $offlineSnapshot ? '—' : '…'; ?></strong></article>
+                <article><i class="bi bi-droplet-half verde-metric-icon" aria-hidden="true"></i><span>Agua ahorrada</span><strong><?php echo $offlineSnapshot ? '—' : '…'; ?></strong></article>
             </div>
+            <?php if ($offlineSnapshot): ?>
+                <p class="verde-muted" role="status">Tus métricas personales se consultan al conectarte; no se guardan en esta copia.</p>
+            <?php endif; ?>
             <p class="verde-impact-note">Estimaciones por vaso registrado: 80 g de CO₂, 15 g de residuos y 250 ml de agua. Son equivalencias orientativas, no mediciones directas.</p>
+            <?php if (!$offlineSnapshot): ?>
             <div class="verde-reward-celebration" id="recompensa-celebracion" role="status" aria-live="polite" hidden>
                 <span class="verde-celebration-icon" aria-hidden="true">🎉</span>
                 <div>
@@ -96,9 +120,25 @@ if (empty($_SESSION['ID_Usuario'])) {
                     <span class="verde-cup-count" id="vasos-contador">0 de 8 vasos</span>
                 </div>
             </section>
+            <?php else: ?>
+            <section class="verde-panel verde-rewards">
+                <div class="verde-rewards-copy">
+                    <span class="verde-eyebrow">RECOMPENSAS</span>
+                    <h2>Tu próxima bebida gratis</h2>
+                    <p class="verde-rewards-earned">Consulta tu progreso al conectarte.</p>
+                    <p class="verde-progress-label">El avance y los cupones no se guardan en esta copia.</p>
+                    <p class="verde-muted">Cada ocho vasos reutilizables recibes una bebida gratis.</p>
+                </div>
+                <div class="verde-cup-visual">
+                    <span class="verde-cup-count">Disponible al conectarte</span>
+                </div>
+            </section>
+            <?php endif; ?>
             <section class="verde-coupons" aria-labelledby="cupones-title">
                 <h2 id="cupones-title">Cupones disponibles</h2>
-                <div id="lista-cupones"><p class="verde-muted">Cargando cupones…</p></div>
+                <div id="<?php echo $offlineSnapshot ? 'cupones-offline' : 'lista-cupones'; ?>">
+                    <p class="verde-muted"><?php echo $offlineSnapshot ? 'Conéctate para consultar tus cupones.' : 'Cargando cupones…'; ?></p>
+                </div>
             </section>
         </section>
 
@@ -107,15 +147,20 @@ if (empty($_SESSION['ID_Usuario'])) {
                 <div><span class="verde-eyebrow">CAFÉLIZ EN COMUNIDAD</span><h2 id="comunidad-title">Marcador colectivo</h2></div>
                 <span class="verde-live"><i aria-hidden="true"></i> Actualizado en vivo</span>
             </div>
-            <div class="verde-metrics" id="metricas-comunidad" aria-live="polite">
-                <article><i class="bi bi-cup-hot-fill verde-metric-icon" aria-hidden="true"></i><span>Vasos evitados</span><strong>…</strong></article>
-                <article><i class="bi bi-cloud-check-fill verde-metric-icon" aria-hidden="true"></i><span>CO₂ no emitido</span><strong>…</strong></article>
-                <article><i class="bi bi-recycle verde-metric-icon" aria-hidden="true"></i><span>Residuos evitados</span><strong>…</strong></article>
-                <article><i class="bi bi-droplet-half verde-metric-icon" aria-hidden="true"></i><span>Agua ahorrada</span><strong>…</strong></article>
+            <div class="verde-metrics"<?php echo $offlineSnapshot ? '' : ' id="metricas-comunidad"'; ?> aria-live="polite">
+                <article><i class="bi bi-cup-hot-fill verde-metric-icon" aria-hidden="true"></i><span>Vasos evitados</span><strong><?php echo $offlineSnapshot ? '—' : '…'; ?></strong></article>
+                <article><i class="bi bi-cloud-check-fill verde-metric-icon" aria-hidden="true"></i><span>CO₂ no emitido</span><strong><?php echo $offlineSnapshot ? '—' : '…'; ?></strong></article>
+                <article><i class="bi bi-recycle verde-metric-icon" aria-hidden="true"></i><span>Residuos evitados</span><strong><?php echo $offlineSnapshot ? '—' : '…'; ?></strong></article>
+                <article><i class="bi bi-droplet-half verde-metric-icon" aria-hidden="true"></i><span>Agua ahorrada</span><strong><?php echo $offlineSnapshot ? '—' : '…'; ?></strong></article>
             </div>
+            <?php if ($offlineSnapshot): ?><p class="verde-muted">El marcador colectivo se actualiza al reconectar.</p><?php endif; ?>
         </section>
     </main>
-    <script src="node_modules/qrcodejs/qrcode.min.js"></script>
-    <script src="JS/verde.js?v=3" defer></script>
+    <?php if ($offlineSnapshot): ?>
+        <script src="JS/offline-experience.js" defer></script>
+    <?php else: ?>
+        <script src="node_modules/qrcodejs/qrcode.min.js"></script>
+        <script src="JS/verde.js?v=3" defer></script>
+    <?php endif; ?>
 </body>
 </html>
