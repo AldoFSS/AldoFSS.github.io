@@ -1,0 +1,62 @@
+.menu-qr-main {
+    max-width: 900px;
+}
+
+.menu-qr-card {
+    display: grid;
+    justify-items: center;
+    gap: 14px;
+    padding: 28px;
+    border: 1px solid #e1e5ea;
+    border-radius: 16px;
+    background: #fff;
+    text-align: center;
+}
+
+#menu-qr-code {
+    min-height: 256px;
+    padding: 8px;
+    background: #fff;
+}
+
+#menu-qr-code img,
+#menu-qr-code canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+.menu-qr-url {
+    max-width: 100%;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.menu-qr-note,
+.menu-qr-error {
+    margin: 0;
+    color: #68717d;
+}
+
+.menu-qr-error {
+    color: #a42b20;
+}
+
+@media print {
+    .Barra,
+    .admin-heading,
+    #print-menu-qr {
+        display: none !important;
+    }
+
+    .menu-qr-main {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .menu-qr-card {
+        border: 0;
+        box-shadow: none;
+    }
+}

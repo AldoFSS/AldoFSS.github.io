@@ -81,6 +81,50 @@ Para habilitar el menú multilingüe:
 El español usa los nombres y descripciones originales del catálogo. El navegador guarda en caché
 las traducciones inglesa y francesa para poder reutilizarlas sin conexión.
 
+La traducción de catálogo disponible en producción es estática (español, inglés y francés).
+La aplicación detecta `navigator.languages` y conserva la selección, pero no ofrece los 30 idiomas
+de la propuesta ni llama a OpenAI. El generador opcional con Ollama es una herramienta local de
+revisión, no un servicio de traducción en tiempo real. InfinityFree no pudo conectarse al servicio
+intermediario en las pruebas anteriores y actualmente no hay una clave OpenAI configurada en el
+servidor; no se deben publicar claves en JavaScript ni prometer traducción automática sin resolver
+esas condiciones.
+
+## Comandas de barra y QR del menú
+
+Aplicar una sola vez `BD/migracion_comandas_barra.sql` después de respaldar la base de datos.
+Los pedidos previos quedan marcados como entregados; cada nueva compra autenticada se crea como
+pendiente. El personal de barra puede abrir `barra-pedidos.php`: consulta la cola cada cinco
+segundos sin recargar la página y permite avanzar cada pedido por pendiente, preparación, listo y
+entregado. El nombre que aparece es el nombre original del catálogo en español; todavía no se
+traducen personalizaciones como “oat milk, extra hot” ni se relacionan solicitudes extranjeras con
+insumos. Este sondeo es compatible con PHP/MySQL compartido, pero requiere conexión y no es una
+notificación instantánea por WebSocket.
+
+El personal de barra y administración puede abrir `menu-qr.php`, imprimir el QR y colocarlo en las
+mesas. El código dirige al menú en el navegador; no se necesita descargar la aplicación desde una
+tienda. La URL pública debe usar HTTPS para habilitar la instalación PWA y que los navegadores
+permitan las funciones de instalación.
+
+Para validar localmente la cola, después de aplicar las migraciones necesarias, ejecutar
+`python tests/verificar_kds.py`. La prueba crea datos temporales y los elimina al finalizar.
+
+### Alcance restante de la propuesta 4
+
+- La detección automática y el selector manual funcionan para los tres idiomas que tienen
+  traducciones guardadas (español, inglés y francés), no para más de 30.
+- El QR, la instalación PWA y la visualización offline del menú no descargan una app de una tienda.
+  La disponibilidad offline depende de haber abierto el menú con conexión en ese dispositivo.
+- El KDS recibe las compras registradas y actualiza estados por sondeo, pero no interpreta
+  instrucciones de preparación escritas por el cliente ni mapea cambios de leche/temperatura a
+  insumos.
+- El catálogo incluye Café de Olla; no incluye Metate Mocha ni Pan de Muerto. No se agregan como
+  productos vendibles sin aprobación de catálogo, ingredientes e inventario.
+- La herramienta local con Ollama genera borradores de inglés y francés para revisión, pero no es
+  un conector OpenAI en tiempo real. Sin credenciales y salida HTTPS permitida desde el hosting,
+  los puntos de OpenAI y traducción dinámica no se pueden validar en InfinityFree.
+- Cero errores de barra y $22,080 MXN adicionales al mes son resultados que requieren medición
+  operativa y datos de ventas; no se pueden afirmar como garantizados por la implementación.
+
 ### Actualizar traducciones con un modelo local
 
 Las traducciones del menú pueden regenerarse sin contratar una API de IA. En la computadora local,

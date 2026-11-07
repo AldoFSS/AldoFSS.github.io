@@ -89,6 +89,8 @@
                     <ul class="dropdown-menu" aria-labelledby="greenNavMenu">
                       <li><a class="dropdown-item" href="./verde.php">Mi huella verde</a></li>
                       <li><a class="dropdown-item" href="./verde-barra.php">Caja verde</a></li>
+                      <li><a class="dropdown-item" href="./barra-pedidos.php">Comandas de barra</a></li>
+                      <li><a class="dropdown-item" href="./menu-qr.php">QR del menú</a></li>
                     </ul>
                   </li>
                 <?php else: ?>
@@ -99,6 +101,8 @@
                 <li class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle" href="#" id="adminNavMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administración</a>
                   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminNavMenu">
+                    <li><a class="dropdown-item" href="./barra-pedidos.php"><i class="bi bi-receipt" aria-hidden="true"></i> Comandas de barra</a></li>
+                    <li><a class="dropdown-item" href="./menu-qr.php"><i class="bi bi-qr-code" aria-hidden="true"></i> QR del menú</a></li>
                     <li><a class="dropdown-item" href="./listProductos.php"><i class="bi bi-cup-hot" aria-hidden="true"></i> Productos</a></li>
                     <li><a class="dropdown-item" href="./listCategorias.php"><i class="bi bi-tags" aria-hidden="true"></i> Categorías</a></li>
                     <li><a class="dropdown-item" href="./listUsuarios.php"><i class="bi bi-people" aria-hidden="true"></i> Usuarios</a></li>
