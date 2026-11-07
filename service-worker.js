@@ -1,4 +1,4 @@
-const CACHE_NAME = "cafeliz-pwa-v50";
+const CACHE_NAME = "cafeliz-pwa-v51";
 const CACHE_PREFIX = "cafeliz-pwa-";
 const APP_SHELL = [
   "./manifest.webmanifest",
@@ -9,6 +9,8 @@ const APP_SHELL = [
   "./CSS/home.css",
   "./CSS/inventario.css?v=2",
   "./CSS/menu-cart.css?v=5",
+  "./CSS/kds.css",
+  "./CSS/menu-qr.css",
   "./CSS/pwa.css",
   "./CSS/reservas.css?v=14",
   "./CSS/verde.css?v=3",
@@ -18,6 +20,7 @@ const APP_SHELL = [
   "./JS/menu-i18n.js?v=3",
   "./JS/nabvar.js?v=3",
   "./JS/offline-experience.js",
+  "./JS/cola-barra.js",
   "./JS/pwa.js",
   "./JS/reservas.js?v=4",
   "./JS/verde-barra.js?v=2",

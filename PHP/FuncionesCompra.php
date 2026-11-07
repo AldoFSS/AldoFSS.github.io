@@ -125,7 +125,10 @@ try {
     $subtotal = number_format($centavos / 100, 2, '.', '');
     $descuento = number_format($descuentoCentavos / 100, 2, '.', '');
     $total = number_format($totalCentavos / 100, 2, '.', '');
-    $q = $connection->prepare('INSERT INTO ordenes (ID_Usuario, Total, Fecha_Compra) VALUES (?, ?, CURRENT_DATE())');
+    $q = $connection->prepare(
+        "INSERT INTO ordenes (ID_Usuario, Total, Fecha_Compra, Estado_KDS, Creado_En)
+        VALUES (?, ?, CURRENT_DATE(), 'pendiente', CURRENT_TIMESTAMP())"
+    );
     $q->bind_param('is', $usuario, $total);
     $q->execute();
     $orden = $connection->insert_id;
